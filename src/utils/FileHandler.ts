@@ -5,8 +5,6 @@ export class FileHandler{
     private path: string = '../../..external-files/endpoints.json';
 
     private content: any;
-    
-    private currentContent: any;
 
     private fileLength: number;
 

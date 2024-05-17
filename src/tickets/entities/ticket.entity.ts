@@ -50,7 +50,7 @@ export class Ticket{
 
     public fields: Field[] = new Array<Field>();
 
-    constructor( id?: number, agent?: Owner, team?: string, open_date?: Date, close_date?: Date, solved_date?: Date, status?: string, service_1?: string, service_2?: string, service_3?: string, category?: string, justification?: string, duration?: string, close_in_first_response?: boolean, model?: string, family?: string, distributor?: string, operation?: string, uf?: string, failure?: string, urgency?: string, customFieldValues?: CustomField[], fields?: Field[]) {
+    constructor( id?: number, agent?: Owner, team?: string, open_date?: Date, close_date?: Date, solved_date?: Date, status?: string, service_1?: string, service_2?: string, service_3?: string, category?: string, justification?: string, duration?: string, close_in_first_response?: boolean, model?: string, family?: string, distributor?: string, operation?: string, uf?: string, failure?: string, urgency?: string, customFieldValues?:any, fields?: Field[]) {
         this.id = id;
         this.agent = agent;
         this.team = team;
@@ -78,8 +78,9 @@ export class Ticket{
 
     async mapFields() {
         let trackedFields = this.getFields();
-        
-        this.customFieldValues.forEach(async (field : any) => {
+        if(this.customFieldValues){
+
+        this.customFieldValues.forEach( (field : any) => {
 
             if (!field || field.items.length === 0) {
                 return;
@@ -88,12 +89,14 @@ export class Ticket{
             field = new CustomField(field.items, field.customFieldId, field.customFieldRuleId, field.line, field.column);
             
             trackedFields.forEach(async element => {
-   
+                element = new Field(element.id, element.name);
+
                 if (element.getId().includes(field.getCustomFieldId().toString())) {
+                    
                     if (element.getName() == "model") {
-
-                        let split = field.getItem()[0].customFieldItem.split(" - ")[0] || null;
-
+                        
+                        let split = field.items[0].customFieldItem.split(" -")[0] || null;
+        
                         this.setModel(split !== 'Sem produto' ? split : null);
                             return;
                         }
@@ -111,7 +114,7 @@ export class Ticket{
             });
 
             return;
-        })
+        })}
         
         return
     }
