@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { max } from 'rxjs';
+import { Action } from 'src/tickets/entities/action.entity';
 import { Ticket } from 'src/tickets/entities/ticket.entity';
 
 export class MovideskApiHandler {
@@ -13,14 +14,30 @@ export class MovideskApiHandler {
 
   private tickets: any[];
 
-  private indexes: number[];
+  private indexes: number[] = [];
 
-  constructor(token: string, url: URL, urlFields: string, skip: number) {
+  private alreadyCountedActionId: any[] = [];
+
+  private actions: any[] = [];
+
+  private oldActionsByDate: any[] = [];
+
+  private teamMembers: any[] = [];
+  
+  private update: boolean = false;
+
+  private last_update: Date;
+
+  constructor(token: string, url: URL, urlFields: string, skip: number,tickets: Ticket[], teamMembers: any[],update: boolean = false) {
     this.token = token;
     this.url = url;
     this.urlFields = urlFields;
     this.skip = skip;
-    this.tickets = [];
+    this.tickets = tickets;
+    this.teamMembers = teamMembers || [];
+    this.update = update;
+
+    this.indexes = tickets.map((ticket) => ticket.id);
   }
 
   async fetchTickets() {
@@ -30,17 +47,22 @@ export class MovideskApiHandler {
 
     while (continueFetching === true) {
       const url = `${this.url}/past?TOKEN=${this.token}&$select=${this.urlFields}&$skip=${this.skip}`;
-
       const response = await axios.get(url);
 
       if (response.data.length === 0) {
-        this.skip =
-          fetchTickets.length > 0
-            ? +fetchTickets[fetchTickets.length - 1].id
-            : +this.skip;
 
-        await this.fetchRemainingTickets();
+        if (this.update == false) {
+          this.fetchRemainingTickets();
+        } else {
 
+          this.skip =
+            fetchTickets.length > 0
+              ? +fetchTickets[fetchTickets.length - 1].id
+              : +this.skip;
+
+          await this.fetchRemainingTicketsIndividually();
+
+        }
         return this.tickets;
       }
 
@@ -53,6 +75,30 @@ export class MovideskApiHandler {
   }
 
   private async fetchRemainingTickets() {
+    this.setSkip(0);
+    const url = `${this.url}/?TOKEN=${this.token}&$select=${this.urlFields}&$skip=${this.skip}`;
+
+    while (true) {
+    
+      const response = await axios.get(url);
+
+      if (response.data.length === 0) {
+        this.skip =
+          this.tickets.length > 0
+            ? +this.tickets[this.tickets.length - 1].id
+            : +this.skip;
+
+        await this.fetchRemainingTicketsIndividually();
+        return this.tickets;
+      }
+
+      this.skip += 1000;
+
+      this.tickets.push(...response.data);
+    }
+  }
+
+  private async fetchRemainingTicketsIndividually(url?: string) {
     const maxConcurrentRequests = 5;
     let activeRequests = [];
     let errorCount = 0;
@@ -66,9 +112,9 @@ export class MovideskApiHandler {
       ) {
         const currentSkip = this.skip++;
         let fetchPromise = axios
-          .get(`${this.url}?id=${currentSkip}&TOKEN=${this.token}`)
+          .get(url || `${this.url}?id=${currentSkip}&TOKEN=${this.token}`)
           .then((response) => {
-            if (response.data && this.indexes.includes(+currentSkip) === false) {
+            if (response.data && this.indexes.includes(+currentSkip) === false ) {
               if (this.indexes.includes(+currentSkip) === false) {
                 this.tickets.push(response.data);
                 this.indexes.push(+currentSkip);
@@ -112,16 +158,31 @@ export class MovideskApiHandler {
     let tickets = await this.fetchTickets();
     let mappedTickets = [];
 
-    if (tickets.length === 0) {
+    if (tickets.length === 0 || tickets === null) {
       return null;
     }
 
-    tickets.forEach((ticket) => {
+    tickets.forEach(async (ticket) => {
+      let agent
+      if (ticket.ownerHistories && ticket.ownerHistories.length > 0 && ticket.ownerHistories[0].owner && ticket.ownerHistories[0].owner.businessName){
+        
+        agent = ticket.ownerHistories[0].owner.businessName
+
+      } else {
+      
+        agent = ticket.owner && ticket.owner.businessName ? ticket.owner.businessName : null;
+      
+      }
+
+      let firstAction = ticket.actions && ticket.actions.length > 0 ? ticket.actions[0] : [];
+
       let newTicket = new Ticket(
-        ticket.id,
-        ticket.owner ? ticket.owner.businessName : null,
-        ticket.ownerTeam,
-        ticket.createdDate,
+        +ticket.id,
+        agent,
+        firstAction && firstAction.timeAppointments && firstAction.timeAppointments[0] && firstAction.timeAppointments[0].createdByTeam
+      ? firstAction.timeAppointments[0].createdByTeam.name
+      : null ,
+        new Date(ticket.createdDate),
         ticket.closedIn,
         ticket.resolvedIn,
         ticket.baseStatus,
@@ -136,6 +197,7 @@ export class MovideskApiHandler {
         ticket.family,
         ticket.distributor,
         ticket.operation,
+        ticket.actions,
         ticket.uf,
         ticket.failure,
         ticket.urgency,
@@ -147,16 +209,131 @@ export class MovideskApiHandler {
 
       newTicket.mapFields();
 
+      newTicket.setActions(await this.getActionQuantityByAgent(ticket.id,ticket.actions, agent))
+
       delete newTicket.customFieldValues;
       delete newTicket.fields;
-
-      mappedTickets.push(newTicket);
+      newTicket.deleteActions();
+      
+      if (this.indexes.includes(newTicket.getId()) === false) {
+        mappedTickets.push(newTicket);
+      }
     });
 
-    this.tickets = mappedTickets.filter((ticket) => ticket !== null);
+    this.tickets = mappedTickets.filter((ticket) => ticket !== null && !ticket.serviceFull );
 
     return this.tickets;
   }
+
+public async fetchActions() { 
+    
+    if (this.teamMembers.length === 0) {
+        return null;
+    }
+
+    const result = [];
+
+  for (const teamMember of this.teamMembers) {
+
+    let continueFetching = true;
+    let errorCount = 0;
+    const maxErrorCount = 3;
+    this.skip = 0;
+    if(teamMember != "Guilherme TI ")
+        while (continueFetching === true) {
+          try {
+            let url = this.update ? `${this.url}/past?TOKEN=${this.token}&$select=id&$expand=actions($expand=createdBy)&$filter=actions/any(b:b/createdBy/businessName eq '${teamMember}') and lastActionDate gt ${this.last_update}&$skip=${this.skip}` : `${this.url}/past?TOKEN=${this.token}&$select=id&$expand=actions($expand=createdBy)&$filter=actions/any(b:b/createdBy/businessName eq '${teamMember}')&$skip=${this.skip}` 
+             
+            let response = await axios.get(url)
+            
+            
+            
+            if (response.data.length === 0) {
+                while (errorCount < maxErrorCount ){
+
+                  this.skip++
+                  response = await axios.get(`${this.url}/past?TOKEN=${this.token}&$select=id&$expand=actions($expand=createdBy)&$filter=actions/any(b:b/createdByTeam/name eq '${teamMember}')&$skip=${this.skip}`);
+                    
+                  if (response.data.length === 0) {
+
+                    errorCount++;
+                    
+                    if (errorCount >= maxErrorCount) {
+                    
+                      continueFetching = false;
+                      
+                      return result;
+                      
+                    }
+                  
+                  }
+
+                  response.data.forEach(async (ticket) => {
+                    await this.getActionQuantityByAgent(ticket.id, ticket.actions, teamMember)
+                  });
+              }
+              
+            } else {
+
+              response.data.forEach(async (ticket) => {
+              await this.getActionQuantityByAgent(ticket.id, ticket.actions, teamMember)
+              });
+              this.skip += 1000;
+            }
+
+            errorCount = 0;
+
+            } catch (error) {
+                if (error.response) {
+                    errorCount++;
+                    if (errorCount >= maxErrorCount) {
+                        continueFetching = false;
+                    }
+                } else {
+                    console.error(`Error fetching actions for team member ${teamMember} at skip ${this.skip}: ${error}`);
+                    errorCount++;
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+  public async getActionQuantityByAgent(id, actions: any[], teamMember: string) { 
+
+    actions.forEach((action) => { 
+      const profileType = action.createdBy ? action.createdBy.profileType : null;
+
+      const id_action = +action.id;
+      const businessName = action.createdBy ? action.createdBy.businessName : null;
+      const date = action.createdDate;
+
+      if (profileType === 1 && this.alreadyCountedActionId.includes(action.id) === false && businessName === teamMember) {
+
+        const newAction = new Action(
+          id_action,
+          +id,
+          businessName,
+          date
+        )
+
+              if (this.teamMembers.includes(businessName) === false && ["Guilherme TI "].includes(businessName) === false){
+
+                  this.teamMembers.push(businessName);
+
+              }
+
+        this.alreadyCountedActionId.push(action.id);
+
+        this.pushActions(newAction);
+      }
+
+    })
+    this.alreadyCountedActionId = [];
+    return this.getActions();
+  }
+
 
   public getTickets() {
     return this.tickets;
@@ -168,5 +345,54 @@ export class MovideskApiHandler {
 
   public setSkip(skip: number) {
     this.skip = +skip;
+  }
+
+  public getTeamMembers() {
+    return this.teamMembers;
+  }
+
+  public setTeamMembers(teamMembers: any[]) {
+    this.teamMembers = teamMembers;
+  }
+
+  public getActions() {
+    return this.actions;
+  }
+
+  public pushActions(actions: any | any[]) {
+    if(Array.isArray(actions)){
+      this.actions.push(...actions);
+    }
+    else {
+      this.actions.push(actions);
+    }
+  }
+
+  public setActions(actions: any[]) {
+    this.actions = actions;
+  }
+
+  public getOldActionsByDate() {
+    return this.oldActionsByDate;
+  }
+
+  public setOldActionsByDate(oldActionsByDate: any[]) {
+    this.oldActionsByDate = oldActionsByDate;
+  }
+
+  public pushOldActionsByDate(oldActionsByDate: any[]) {
+    this.oldActionsByDate.push(...oldActionsByDate);
+  }
+
+  public setLastUpdate(last_update: Date) {
+    this.last_update = last_update;
+  }
+
+  public getLastUpdate() {
+    return this.last_update;
+  }
+
+  public setUpdate(update: boolean) {
+    this.update = update;
   }
 }

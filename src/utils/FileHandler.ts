@@ -44,7 +44,9 @@ export class FileHandler{
         }
             fs.writeFileSync(this.path, JSON.stringify(this.content, null, 2));
 
-            console.info('File saved');
+        console.info('File saved');
+        
+        return this.content;
 
     };
     

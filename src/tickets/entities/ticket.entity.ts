@@ -4,7 +4,7 @@ import { Owner } from "./owner.entity";
 
 export class Ticket{
 
-    private id: number;
+    public id: number;
     
     private agent: Owner;
 
@@ -40,6 +40,8 @@ export class Ticket{
 
     private operation: string;
 
+    private actions: any;
+
     private uf: string;
 
     private failure: string;
@@ -50,7 +52,7 @@ export class Ticket{
 
     public fields: Field[] = new Array<Field>();
 
-    constructor( id?: number, agent?: Owner, team?: string, open_date?: Date, close_date?: Date, solved_date?: Date, status?: string, service_1?: string, service_2?: string, service_3?: string, category?: string, justification?: string, duration?: string, close_in_first_response?: boolean, model?: string, family?: string, distributor?: string, operation?: string, uf?: string, failure?: string, urgency?: string, customFieldValues?:any, fields?: Field[]) {
+    constructor( id?: number, agent?: Owner, team?: string, open_date?: Date, close_date?: Date, solved_date?: Date, status?: string, service_1?: string, service_2?: string, service_3?: string, category?: string, justification?: string, duration?: string, close_in_first_response?: boolean, model?: string, family?: string, distributor?: string, operation?: string,actions? :any, uf?: string, failure?: string, urgency?: string, customFieldValues?:any, fields?: Field[]) {
         this.id = id;
         this.agent = agent;
         this.team = team;
@@ -69,6 +71,7 @@ export class Ticket{
         this.family = family;
         this.distributor = distributor;
         this.operation = operation;
+        this.actions = actions;
         this.uf = uf;
         this.failure = failure;
         this.urgency = urgency;
@@ -110,7 +113,10 @@ export class Ticket{
                     this[element.getName()] = field.getItem()[0].customFieldItem || null;
 
                     return;
+                } else {
+                    return;
                 }
+
             });
 
             return;
@@ -304,4 +310,17 @@ export class Ticket{
     public setUrgency(urgency: string) {
         this.urgency = urgency;
     }
+
+    public getActions(): any {
+        return this.actions;
+    }
+
+    public setActions(actions: any) {
+        this.actions = actions;
+    }
+
+    public deleteActions() {
+        delete this.actions;
+    }
+
 }

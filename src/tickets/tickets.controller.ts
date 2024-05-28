@@ -7,7 +7,12 @@ export class TicketsController {
 
   @Get('/:brand/:token')
   async findAll(@Param('brand') brand: string, @Param('token') token: string) {
-    return await this.ticketsService.findAll(brand,token);
+    return await this.ticketsService.findAllByBrand(brand,token);
+  }
+
+  @Get('/:brand/:token/actions')
+  async findActionsPerAgent(@Param('brand') brand: string, @Param('token') token: string) {
+    return await this.ticketsService.findActionsPerAgent(brand,token);
   }
 
 }

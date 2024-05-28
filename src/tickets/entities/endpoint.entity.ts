@@ -17,7 +17,11 @@ export class EndPoint {
 
     public endPoints: any;
 
-    constructor(brand?: string, url?: URL, token?: string, urlFields?: string, fields?: Field[], skip?: number) {
+    public teamMembers: any[] = [];
+
+    private lastUpdate: Date;
+
+    constructor(brand?: string, url?: URL, token?: string, urlFields?: string, fields?: Field[], skip?: number, teamMembers?: any[]) {
         const fileHandler = new FileHandler(process.env.ENDPOINT_PATH || "endpoints.json");
         this.endPoints = fileHandler.readLocalFile();
 
@@ -33,6 +37,8 @@ export class EndPoint {
 
         skip ? this.skip = skip : this.skip = this.skip;
 
+        teamMembers ? this.teamMembers = teamMembers : this.teamMembers = this.teamMembers;
+
     }
 
     findEndPointByBrandAndToken(brand: string = this.getBrand(), token: string = this.getToken()): EndPoint {
@@ -45,6 +51,7 @@ export class EndPoint {
                 this.setUrlFields(element.urlFields);
                 this.setFields(element.fields);
                 this.setSkip(element.skip);
+                this.setTeamMembers(element.teamMembers);
 
                 return element;
             }
@@ -57,6 +64,7 @@ export class EndPoint {
                 this.setUrlFields(this.endPoints.urlFields);
                 this.setFields(this.endPoints.fields);
                 this.setSkip(this.endPoints.skip);
+                this.setTeamMembers(this.endPoints.teamMembers);
 
                 return this.endPoints;
             }
@@ -112,6 +120,22 @@ export class EndPoint {
 
     public setSkip(skip: number) {
         this.skip = skip;
+    }
+
+    public getTeamMembers(): any[] {
+        return this.teamMembers;
+    }
+
+    public setTeamMembers(teamMembers: any[]) {
+        this.teamMembers = teamMembers;
+    }
+
+    public getLastUpdate(): Date {
+        return this.lastUpdate;
+    }
+
+    public setLastUpdate(lastUpdate: Date) {
+        this.lastUpdate = lastUpdate;
     }
 
 }
