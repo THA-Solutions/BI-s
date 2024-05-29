@@ -19,7 +19,9 @@ export class EndPoint {
 
     public teamMembers: any[] = [];
 
-    private lastUpdate: Date;
+    private lastTicketsUpdateDate: string;
+
+    private lastActionsUpdateDate: string;
 
     constructor(brand?: string, url?: URL, token?: string, urlFields?: string, fields?: Field[], skip?: number, teamMembers?: any[]) {
         const fileHandler = new FileHandler(process.env.ENDPOINT_PATH || "endpoints.json");
@@ -52,6 +54,8 @@ export class EndPoint {
                 this.setFields(element.fields);
                 this.setSkip(element.skip);
                 this.setTeamMembers(element.teamMembers);
+                this.setLastActionsUpdateDate(element.lastActionsUpdateDate);
+                this.setLastTicketsUpdateDate(element.lastTicketsUpdateDate);
 
                 return element;
             }
@@ -65,6 +69,8 @@ export class EndPoint {
                 this.setFields(this.endPoints.fields);
                 this.setSkip(this.endPoints.skip);
                 this.setTeamMembers(this.endPoints.teamMembers);
+                this.setLastActionsUpdateDate(this.endPoints.lastActionsUpdateDate);
+                this.setLastTicketsUpdateDate(this.endPoints.lastTicketsUpdateDate);
 
                 return this.endPoints;
             }
@@ -130,12 +136,20 @@ export class EndPoint {
         this.teamMembers = teamMembers;
     }
 
-    public getLastUpdate(): Date {
-        return this.lastUpdate;
+    public getLastTicketsUpdateDate(): string {
+        return this.lastTicketsUpdateDate;
     }
 
-    public setLastUpdate(lastUpdate: Date) {
-        this.lastUpdate = lastUpdate;
+    public setLastTicketsUpdateDate(lastUpdate: string) {
+        this.lastTicketsUpdateDate = lastUpdate;
+    }
+
+    public getLastActionsUpdateDate(): string {
+        return this.lastActionsUpdateDate;
+    }
+
+    public setLastActionsUpdateDate(lastUpdate: string) {
+        this.lastActionsUpdateDate = lastUpdate;
     }
 
 }

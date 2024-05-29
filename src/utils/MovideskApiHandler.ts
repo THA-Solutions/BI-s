@@ -26,7 +26,7 @@ export class MovideskApiHandler {
   
   private update: boolean = false;
 
-  private last_update: Date;
+  private last_update: string;
 
   constructor(token: string, url: URL, urlFields: string, skip: number,tickets: Ticket[], teamMembers: any[],update: boolean = false) {
     this.token = token;
@@ -164,9 +164,13 @@ export class MovideskApiHandler {
 
     tickets.forEach(async (ticket) => {
       let agent
-      if (ticket.ownerHistories && ticket.ownerHistories.length > 0 && ticket.ownerHistories[0].owner && ticket.ownerHistories[0].owner.businessName){
+      if (ticket.actions){
         
-        agent = ticket.ownerHistories[0].owner.businessName
+        agent = ticket.actions.forEach((action) => {
+          if (action.createdBy && action.createdBy.businessName && (action.createdBy.profileType === 1 || action.createdBy.profileType === 3)) {
+            return action.createdBy.businessName;
+          }
+        });
 
       } else {
       
@@ -237,16 +241,14 @@ public async fetchActions() {
 
     let continueFetching = true;
     let errorCount = 0;
-    const maxErrorCount = 3;
+    const maxErrorCount = 1;
     this.skip = 0;
     if(teamMember != "Guilherme TI ")
         while (continueFetching === true) {
           try {
             let url = this.update ? `${this.url}/past?TOKEN=${this.token}&$select=id&$expand=actions($expand=createdBy)&$filter=actions/any(b:b/createdBy/businessName eq '${teamMember}') and lastActionDate gt ${this.last_update}&$skip=${this.skip}` : `${this.url}/past?TOKEN=${this.token}&$select=id&$expand=actions($expand=createdBy)&$filter=actions/any(b:b/createdBy/businessName eq '${teamMember}')&$skip=${this.skip}` 
-             
+
             let response = await axios.get(url)
-            
-            
             
             if (response.data.length === 0) {
                 while (errorCount < maxErrorCount ){
@@ -301,6 +303,8 @@ public async fetchActions() {
 }
 
   public async getActionQuantityByAgent(id, actions: any[], teamMember: string) { 
+
+    if (!actions || actions.length === 0) return;
 
     actions.forEach((action) => { 
       const profileType = action.createdBy ? action.createdBy.profileType : null;
@@ -384,7 +388,7 @@ public async fetchActions() {
     this.oldActionsByDate.push(...oldActionsByDate);
   }
 
-  public setLastUpdate(last_update: Date) {
+  public setLastUpdate(last_update: string) {
     this.last_update = last_update;
   }
 

@@ -16,6 +16,9 @@ export class TicketsService {
   private actionsPerAgentFileHandler: FileHandler;
   private movideskApiHandler: MovideskApiHandler;
 
+  private ticketFetchInProgress = false;
+  private actionsFetchInProgress = false;
+
   constructor() {
     this.endPointFileHandler = new FileHandler('endpoints.json');
 
@@ -27,63 +30,122 @@ export class TicketsService {
   }
 
   async findAllByBrand(brand: string, token: string) {
-    try {
-      this.initializeOldTicketsFileHandler(brand);
-      this.oldTickets = this.readOldTickets() || [];
+  try {
+    this.initializeOldTicketsFileHandler(brand);
+    this.oldTickets = this.readOldTickets() || [];
 
-      this.initializeActionsPerAgentFileHandler(brand);
-      this.oldActionsPerAgent = this.realdOldActionsPerAgent() || [];
+    this.initializeActionsPerAgentFileHandler(brand);
+    this.oldActionsPerAgent = this.readOldActionsPerAgent() || [];
 
-      this.endPoint = new EndPoint(brand, null, token, null, null, null);
-      this.endPoint.findEndPointByBrandAndToken(brand, token);
+    this.endPoint = new EndPoint(brand, null, token, null, null, null);
+    this.endPoint.findEndPointByBrandAndToken(brand, token);
 
-      if (!this.oldTicketsFileHandler.checkFileExists()) {
-        this.endPoint.setSkip(0);
-      }
-
-      this.initializeMovideskApiHandler();
-
-      this.newTickets = await this.movideskApiHandler.fetchAndMapTickets(this.endPoint.getFields());
-
-      this.actionsPerAgent = this.oldActionsPerAgent.concat(this.movideskApiHandler.getActions().flat());
-
-      this.endPoint.setTeamMembers(this.movideskApiHandler.getTeamMembers());
-      
-      return await this.writeTicketsFile();
-    } catch (error) {
-      console.error(error);
-      throw new Error('Error while fetching tickets');
+    if (!this.oldTicketsFileHandler.checkFileExists()) {
+      this.endPoint.setSkip(0);
     }
-  }
 
-  async findActionsPerAgent(brand: string, token: string) { 
-    try {
-      this.initializeActionsPerAgentFileHandler(brand);
-      this.oldActionsPerAgent = this.realdOldActionsPerAgent() || [];
+    const updateTimeDifference = (new Date().getTime() - new Date(this.endPoint.getLastTicketsUpdateDate()).getTime()) / (1000 * 60);
 
-      this.endPoint = new EndPoint(brand, null, token, null, null, null);
-      this.endPoint.findEndPointByBrandAndToken(brand, token);
-
-      this.initializeMovideskApiHandler();
-      if (this.oldActionsPerAgent.length > 0) {
-        this.movideskApiHandler.setUpdate(true);
-      } else {
-        this.movideskApiHandler.setUpdate(false);
-      }
-      this.movideskApiHandler.setLastUpdate(this.endPoint.getLastUpdate())
-      
-      await this.movideskApiHandler.fetchActions()
-
-      this.actionsPerAgent ? this.actionsPerAgent : this.actionsPerAgent = [];
-
-      this.actionsPerAgent = this.oldActionsPerAgent.concat(this.movideskApiHandler.getActions().flat());
-
-      return await this.writeActionsPerAgentFile();
-    } catch (error) {
-      console.error(error);
-      throw new Error('Error while fetching tickets');
+    if (updateTimeDifference <= 10 || this.ticketFetchInProgress === true) {
+      return this.oldTickets;
     }
+
+    setTimeout(async () => {
+      try {
+
+        this.initializeMovideskApiHandler();
+
+        this.ticketFetchInProgress = true;
+
+        this.newTickets = await this.movideskApiHandler.fetchAndMapTickets(this.endPoint.getFields());
+
+        this.actionsPerAgent = this.oldActionsPerAgent.concat(this.movideskApiHandler.getActions().flat());
+
+        this.endPoint.setTeamMembers(this.movideskApiHandler.getTeamMembers());
+
+        this.endPoint.setLastTicketsUpdateDate(new Date() as any);
+
+        if (this.newTickets.length > 0) {
+          await this.writeTicketsFile();
+          this.updateEndPoints();
+        }
+
+        this.ticketFetchInProgress = false;
+
+        return;
+      } catch (fetchError) {
+        console.error('Error while fetching new tickets:', fetchError);
+      }
+    }, 0);
+
+    return this.oldTickets;
+  } catch (error) {
+    console.error(error);
+    throw new Error('Error while fetching tickets');
   }
+}
+
+
+ async findActionsPerAgent(brand: string, token: string) {
+  try {
+    this.initializeActionsPerAgentFileHandler(brand);
+    this.oldActionsPerAgent = this.readOldActionsPerAgent() || [];
+
+    this.endPoint = new EndPoint(brand, null, token, null, null, null);
+    this.endPoint.findEndPointByBrandAndToken(brand, token);
+
+    const updateTimeDifference = (new Date().getTime() - new Date(this.endPoint.getLastActionsUpdateDate()).getTime()) / (1000 * 60);
+
+    this.initializeMovideskApiHandler();
+    if (this.oldActionsPerAgent.length > 0) {
+      this.movideskApiHandler.setUpdate(true);
+    } else {
+      this.movideskApiHandler.setUpdate(false);
+    }
+
+    this.movideskApiHandler.setLastUpdate(this.endPoint.getLastActionsUpdateDate());
+
+    if (updateTimeDifference >= 10 && this.actionsFetchInProgress === false) {
+      setTimeout(async () => {
+        try {
+          await this.movideskApiHandler.fetchActions();
+
+          this.actionsFetchInProgress = true;
+
+          this.actionsPerAgent = this.oldActionsPerAgent.concat(this.movideskApiHandler.getActions().flat());
+
+          this.actionsPerAgent.length === 0 ? this.actionsPerAgent = this.oldActionsPerAgent : this.actionsPerAgent = this.actionsPerAgent;
+         
+          
+          if (this.actionsPerAgent.length === 0) {
+
+            this.actionsFetchInProgress = false;
+
+            return;
+          }else{
+
+          this.endPoint.setLastActionsUpdateDate(new Date() as any);
+
+          this.writeActionsPerAgentFile();
+          this.updateEndPoints();
+        
+          }
+        } catch (fetchError) {
+          console.error('Error while fetching new actions:', fetchError);
+        }
+      }, 0);
+
+      return this.oldActionsPerAgent;
+    } else {
+
+      return this.oldActionsPerAgent;
+    }
+  } catch (error) {
+    console.error(error);
+    throw new Error('Error while fetching tickets');
+  }
+}
+
 
   private initializeOldTicketsFileHandler(brand: string) {
     this.oldTicketsFileHandler = new FileHandler(`./external_files/json/Tickets-${brand}.json`);
@@ -100,7 +162,7 @@ export class TicketsService {
     return this.oldTicketsFileHandler.getFileContent();
   }
 
-  private realdOldActionsPerAgent(): any[] {
+  private readOldActionsPerAgent(): any[] {
     this.actionsPerAgentFileHandler.readLocalFile();
     return this.actionsPerAgentFileHandler.getFileContent();
   }
@@ -127,6 +189,9 @@ export class TicketsService {
       await this.handleNewTickets();
       await this.updateEndPoints();
       this.writeActionsPerAgentFile();
+
+      this.ticketFetchInProgress = false;
+
       return this.newTickets.concat(this.oldTickets);
     }
   }
@@ -138,6 +203,8 @@ export class TicketsService {
     this.oldActionsPerAgent = []
 
     await this.updateEndPoints();
+
+    this.actionsFetchInProgress = false;
     return this.actionsPerAgentFileHandler.writeLocalFile();
   }
 
@@ -188,8 +255,6 @@ export class TicketsService {
 
   private async updateEndPoints() {
     let endPointList = this.endPointFileHandler.readLocalFile();
-
-    this.endPoint.setLastUpdate(new Date());
 
     delete this.endPoint.endPoints;
 
