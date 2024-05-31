@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { max } from 'rxjs';
 import { Action } from 'src/tickets/entities/action.entity';
 import { Ticket } from 'src/tickets/entities/ticket.entity';
 
@@ -52,9 +51,10 @@ export class MovideskApiHandler {
       if (response.data.length === 0) {
 
         if (this.update == false) {
+          console.log(`all tickets fetched`);
           this.fetchRemainingTickets();
         } else {
-
+          console.log(`B`);
           this.skip =
             fetchTickets.length > 0
               ? +fetchTickets[fetchTickets.length - 1].id
@@ -156,78 +156,79 @@ export class MovideskApiHandler {
 
   public async fetchAndMapTickets(fields) {
     let tickets = await this.fetchTickets();
-    let mappedTickets = [];
 
-    if (tickets.length === 0 || tickets === null) {
-      return null;
-    }
+    if (tickets.length === 0 || tickets === null) return;
 
-    tickets.forEach(async (ticket) => {
-      let agent
-      if (ticket.actions){
-        
-        agent = ticket.actions.forEach((action) => {
-          if (action.createdBy && action.createdBy.businessName && (action.createdBy.profileType === 1 || action.createdBy.profileType === 3)) {
-            return action.createdBy.businessName;
-          }
-        });
+    let mappedTicketsPromises = tickets.map(async (ticket) => {
+        let agent;
+        let firstAction;
 
-      } else {
-      
-        agent = ticket.owner && ticket.owner.businessName ? ticket.owner.businessName : null;
-      
-      }
+        if (!this.indexes.includes(ticket.id)) {
+            if (ticket.actions) {
+                agent = ticket.actions.reduce((acc, action) => {
+                    if (action.createdBy && action.createdBy.businessName && (action.createdBy.profileType === 1 || action.createdBy.profileType === 3)) {
+                        return action.createdBy.businessName;
+                    }
+                    return acc;
+                }, null);
+                
+                firstAction = ticket.actions[0] || [];
+            } else {
+                agent = ticket.owner && ticket.owner.businessName ? ticket.owner.businessName : null;
+            }
 
-      let firstAction = ticket.actions && ticket.actions.length > 0 ? ticket.actions[0] : [];
+            let newTicket = new Ticket(
+                +ticket.id,
+                agent,
+                firstAction && firstAction.timeAppointments && firstAction.timeAppointments[0] && firstAction.timeAppointments[0].createdByTeam
+                ? firstAction.timeAppointments[0].createdByTeam.name
+                : null,
+                ticket.createdDate,
+                ticket.closedIn,
+                ticket.resolvedIn,
+                ticket.baseStatus,
+                ticket.serviceFirstLevel,
+                ticket.serviceSecondLevel,
+                ticket.serviceThirdLevel,
+                ticket.category,
+                ticket.justification,
+                ticket.lifeTimeWorkingTime,
+                ticket.resolvedInFirstCall,
+                ticket.model,
+                ticket.family,
+                ticket.distributor,
+                ticket.operation,
+                ticket.actions,
+                ticket.uf,
+                ticket.failure,
+                ticket.urgency,
+                ticket.customFieldValues,
+                fields,
+            );
 
-      let newTicket = new Ticket(
-        +ticket.id,
-        agent,
-        firstAction && firstAction.timeAppointments && firstAction.timeAppointments[0] && firstAction.timeAppointments[0].createdByTeam
-      ? firstAction.timeAppointments[0].createdByTeam.name
-      : null ,
-        new Date(ticket.createdDate),
-        ticket.closedIn,
-        ticket.resolvedIn,
-        ticket.baseStatus,
-        ticket.serviceFirstLevel,
-        ticket.serviceSecondLevel,
-        ticket.serviceThirdLevel,
-        ticket.category,
-        ticket.justification,
-        ticket.lifeTimeWorkingTime,
-        ticket.resolvedInFirstCall,
-        ticket.model,
-        ticket.family,
-        ticket.distributor,
-        ticket.operation,
-        ticket.actions,
-        ticket.uf,
-        ticket.failure,
-        ticket.urgency,
-        ticket.customFieldValues,
-        fields,
-      );
+            newTicket.setCustomFieldValues(ticket.customFieldValues);
 
-      newTicket.setCustomFieldValues(ticket.customFieldValues);
+            await newTicket.mapFields();
 
-      newTicket.mapFields();
+            newTicket.setActions(await this.getActionQuantityByAgent(ticket.id, ticket.actions, agent));
 
-      newTicket.setActions(await this.getActionQuantityByAgent(ticket.id,ticket.actions, agent))
+            delete newTicket.customFieldValues;
+            delete newTicket.fields;
+            newTicket.deleteActions();
 
-      delete newTicket.customFieldValues;
-      delete newTicket.fields;
-      newTicket.deleteActions();
-      
-      if (this.indexes.includes(newTicket.getId()) === false) {
-        mappedTickets.push(newTicket);
-      }
+            return newTicket;
+        }
+        return null;
     });
 
-    this.tickets = mappedTickets.filter((ticket) => ticket !== null && !ticket.serviceFull );
+    let mappedTickets = await Promise.all(mappedTicketsPromises);
 
+    console.log(mappedTickets[mappedTickets.length - 1]);
+
+    this.tickets = mappedTickets.filter(ticket => ticket !== null && ticket !== undefined && ticket.id);
     return this.tickets;
-  }
+}
+
 
 public async fetchActions() { 
     
