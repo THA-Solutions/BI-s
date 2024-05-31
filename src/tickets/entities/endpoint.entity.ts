@@ -23,6 +23,8 @@ export class EndPoint {
 
     private lastActionsUpdateDate: string;
 
+    private lastCompleteUpdateDate: string;
+
     constructor(brand?: string, url?: URL, token?: string, urlFields?: string, fields?: Field[], skip?: number, teamMembers?: any[]) {
         const fileHandler = new FileHandler(process.env.ENDPOINT_PATH || "endpoints.json");
         this.endPoints = fileHandler.readLocalFile();
@@ -56,6 +58,7 @@ export class EndPoint {
                 this.setTeamMembers(element.teamMembers);
                 this.setLastActionsUpdateDate(element.lastActionsUpdateDate);
                 this.setLastTicketsUpdateDate(element.lastTicketsUpdateDate);
+                this.setLastCompleteUpdateDate(element.lastCompleteUpdateDate)
 
                 return element;
             }
@@ -71,6 +74,7 @@ export class EndPoint {
                 this.setTeamMembers(this.endPoints.teamMembers);
                 this.setLastActionsUpdateDate(this.endPoints.lastActionsUpdateDate);
                 this.setLastTicketsUpdateDate(this.endPoints.lastTicketsUpdateDate);
+                this.setLastCompleteUpdateDate(this.endPoints.lastCompleteUpdateDate)
 
                 return this.endPoints;
             }
@@ -150,6 +154,14 @@ export class EndPoint {
 
     public setLastActionsUpdateDate(lastUpdate: string) {
         this.lastActionsUpdateDate = lastUpdate;
+    }
+
+    public getLastCompleteUpdateDate(): string {
+        return this.lastCompleteUpdateDate;
+    }
+
+    public setLastCompleteUpdateDate(lastUpdate: string) {
+        this.lastCompleteUpdateDate = lastUpdate;
     }
 
 }

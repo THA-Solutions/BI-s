@@ -47,14 +47,11 @@ export class MovideskApiHandler {
     while (continueFetching === true) {
       const url = `${this.url}/past?TOKEN=${this.token}&$select=${this.urlFields}&$skip=${this.skip}`;
       const response = await axios.get(url);
-
       if (response.data.length === 0) {
 
         if (this.update == false) {
-          console.log(`all tickets fetched`);
           this.fetchRemainingTickets();
         } else {
-          console.log(`B`);
           this.skip =
             fetchTickets.length > 0
               ? +fetchTickets[fetchTickets.length - 1].id
@@ -222,8 +219,6 @@ export class MovideskApiHandler {
     });
 
     let mappedTickets = await Promise.all(mappedTicketsPromises);
-
-    console.log(mappedTickets[mappedTickets.length - 1]);
 
     this.tickets = mappedTickets.filter(ticket => ticket !== null && ticket !== undefined && ticket.id);
     return this.tickets;

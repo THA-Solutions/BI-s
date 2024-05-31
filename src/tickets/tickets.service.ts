@@ -42,20 +42,24 @@ export class TicketsService {
     this.endPoint = new EndPoint(brand, null, token, null, null, null);
     this.endPoint.findEndPointByBrandAndToken(brand, token);
 
-    if (this.oldTicketsFileHandler.checkFileExists() == false) {
-      console.log(`1`)
+    if (this.oldTicketsFileHandler.checkFileExists() == false || ((new Date().getTime() - new Date(this.endPoint.getLastCompleteUpdateDate()).getTime()) / 1000*60) >= 43200) {
       this.endPoint.setSkip(0);
+      this.oldActionsPerAgent = [];
+      this.oldTickets = [];
+      this.actionsPerAgent = [];
+      this.newTickets = [];
+
+      this.oldTicketsFileHandler.setFileContent([]);
+      this.actionsPerAgentFileHandler.setFileContent([]);
     }
 
     const updateTimeDifference = (new Date().getTime() - new Date(this.endPoint.getLastTicketsUpdateDate()).getTime()) / (1000 * 60);
-    console.log(updateTimeDifference)
     if (updateTimeDifference <= 10 || this.ticketFetchInProgress === true) {
-      console.log('Tickets up to date');
       return this.oldTickets;
     }
 
     setTimeout(async () => {
-      console.log('Fetching new tickets');
+
       try {
 
         this.initializeMovideskApiHandler();
@@ -71,8 +75,6 @@ export class TicketsService {
         this.endPoint.setLastTicketsUpdateDate(new Date() as any);
 
         if (this.newTickets.length > 0) {
-          console.log(this.oldTickets[this.oldTickets.length - 1],"----")
-          console.log(this.newTickets[this.newTickets.length - 1],"----B")
           await this.writeTicketsFile();
           this.updateEndPoints();
         }
@@ -102,6 +104,10 @@ export class TicketsService {
     this.endPoint = new EndPoint(brand, null, token, null, null, null);
     this.endPoint.findEndPointByBrandAndToken(brand, token);
 
+    if(!this.endPoint.getLastActionsUpdateDate() && this.oldActionsPerAgent.length > 0){
+      this.endPoint.setLastActionsUpdateDate(this.oldActionsPerAgent[this.oldActionsPerAgent.length - 1].date);
+    }
+
     const updateTimeDifference = (new Date().getTime() - new Date(this.endPoint.getLastActionsUpdateDate()).getTime()) / (1000 * 60);
 
     this.initializeMovideskApiHandler();
@@ -113,7 +119,8 @@ export class TicketsService {
 
     this.movideskApiHandler.setLastUpdate(this.endPoint.getLastActionsUpdateDate());
 
-    if (updateTimeDifference >= 10 && this.actionsFetchInProgress === false) {
+    if (!updateTimeDifference || updateTimeDifference >= 10 && this.actionsFetchInProgress === false) {
+
       setTimeout(async () => {
         try {
           await this.movideskApiHandler.fetchActions();
@@ -124,7 +131,7 @@ export class TicketsService {
 
           this.actionsPerAgent.length === 0 ? this.actionsPerAgent = this.oldActionsPerAgent : this.actionsPerAgent = this.actionsPerAgent;
          
-          
+
           if (this.actionsPerAgent.length === 0) {
 
             this.actionsFetchInProgress = false;
@@ -136,7 +143,7 @@ export class TicketsService {
 
           this.writeActionsPerAgentFile();
           this.updateEndPoints();
-        
+
           }
         } catch (fetchError) {
           console.error('Error while fetching new actions:', fetchError);
@@ -145,12 +152,11 @@ export class TicketsService {
 
       return this.oldActionsPerAgent;
     } else {
-
       return this.oldActionsPerAgent;
     }
   } catch (error) {
     console.error(error);
-    throw new Error('Error while fetching tickets');
+    throw new Error('Error while fetching actions');
   }
 }
 
@@ -189,12 +195,10 @@ export class TicketsService {
 
   private async writeTicketsFile() {
     if (this.shouldMergeTickets()) {
-      console.log(`1`)
       this.newTickets && this.mergeTickets();
       this.writeActionsPerAgentFile();
       return this.oldTickets;
     } else {
-      console.log(`2`)
       await this.handleNewTickets();
       await this.updateEndPoints();
       this.writeActionsPerAgentFile();
@@ -242,7 +246,6 @@ export class TicketsService {
     if (!this.oldTicketsFileHandler.checkFileExists()) {
       if (this.newTickets && this.newTickets.length > 0) {
         this.oldTicketsFileHandler.setFileContent(this.newTickets);
-        console.log(this.newTickets)
         this.oldTicketsFileHandler.writeLocalFile();
         this.endPoint.setSkip(+this.newTickets[this.newTickets.length - 1].id || 0);
       } else {
@@ -254,7 +257,6 @@ export class TicketsService {
       this.endPoint.setSkip(+this.newTickets[this.newTickets.length - 1].id);
       this.oldTickets = this.oldTickets.concat(this.newTickets);
       this.oldTicketsFileHandler.setFileContent(this.oldTickets);
-      console.log(this.oldTickets[this.oldTickets.length - 1])
       this.oldTicketsFileHandler.writeLocalFile();
       this.newTickets = this.oldTickets;
 
