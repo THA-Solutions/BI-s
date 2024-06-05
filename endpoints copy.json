@@ -1,0 +1,162 @@
+[
+  {
+    "teamMembers": [
+      "Suporte Chint Power Brazil 3",
+      "Eduardo Melo",
+      "Suporte Chint Power Brasil 1",
+      "Reliton Junior",
+      "Cassio Gomes",
+      "Walisson Melo ",
+      "Caique Barros"
+    ],
+    "brand": "Chint",
+    "url": "https://chintpower.movidesk.com/public/v1/tickets",
+    "token": "75bd93a5-dd30-406f-84cd-e2400172350c",
+    "urlFields": "id,ownerTeam,justification,category,lifeTimeWorkingTime,baseStatus,createdBy,createdBy,serviceFirstLevel,serviceSecondLevel,serviceThirdLevel,createdDate,resolvedIn,closedIn,resolvedInFirstCall&$expand=customFieldValues($expand=items),statusHistories($expand=changedBy),owner,actions($expand=createdBy)",
+    "fields": [
+      {
+        "id": [
+          "179041"
+        ],
+        "name": "model"
+      },
+      {
+        "id": [
+          ""
+        ],
+        "name": "operation"
+      },
+      {
+        "id": [
+          ""
+        ],
+        "name": "failure"
+      },
+      {
+        "id": [
+          "176887"
+        ],
+        "name": "distributor"
+      },
+      {
+        "id": [
+          "176860"
+        ],
+        "name": "uf"
+      }
+    ],
+    "skip": 2552
+  },
+{
+    "teamMembers": [
+      "Felipe Magalhães",
+      "Ysaac Cerqueira",
+      "Augusto Batista",
+      "Júlio Linardi ",
+      "Jackson Souza",
+      "Caroline Ferreira",
+      "Victor Melo",
+      "Otavio Zamith",
+      "Max Pereira",
+      "Walisson Melo",
+      "Marcos Felipe Jr",
+      "Anderson Kimura",
+      "Dayane Lopes",
+      "Arthur Nogueira",
+      "Arthur Nogueira",
+      "Leandro Nascimento",
+      "Wellington Viana",
+      "Rafael Costa",
+      "Hudson Costa",
+      "Felipe Rigotti",
+      "Fabiana Almeida",
+      "Jose Mata",
+      "Rodrigo Gomes",
+      "Fernanda Almeida",
+      "Matheus Mendes",
+      "Jessica Fernanda Bandeira",
+      "Danilo Alves",
+      "Thiago Alves",
+      "Chris Liu",
+      "Thyago Ferreira",
+      "Matheus Silva"
+    ],
+    "brand": "sungrow",
+    "url": "https://sungrow.movidesk.com/public/v1/tickets",
+    "token": "64118f96-8287-4e6b-b1f1-9d20fb069bba",
+    "urlFields": "id,ownerTeam,justification,category,lifeTimeWorkingTime,baseStatus,createdBy,createdBy,serviceFirstLevel,serviceSecondLevel,serviceThirdLevel,createdDate,resolvedIn,closedIn,resolvedInFirstCall&$expand=customFieldValues($expand=items),statusHistories($expand=changedBy),owner,actions($expand=createdBy)",
+    "fields": [
+      {
+        "id": [
+          "176213"
+        ],
+        "name": "family"
+      },
+      {
+        "id": [
+          "176227"
+        ],
+        "name": "operation"
+      },
+      {
+        "id": [
+          "116049"
+        ],
+        "name": "failure"
+      },
+      {
+        "id": [
+          "176217",
+          "176218",
+          "176219",
+          "176220",
+          "176221",
+          "176222",
+          "116043"
+        ],
+        "name": "model"
+      },
+      {
+        "id": [
+          "116051"
+        ],
+        "name": "distributor"
+      },
+      {
+        "id": [
+          "116055",
+          "156212"
+        ],
+        "name": "uf"
+      },
+      {
+        "id": [
+          "123740",
+          "155426",
+          "116056",
+          "116053",
+          "155432",
+          "116049",
+          "116046",
+          "116052",
+          "116045",
+          "132095",
+          "155427",
+          "155428",
+          "155429",
+          "155430",
+          "155431",
+          "155433",
+          "116043",
+          "132094",
+          "126402",
+          "116034"
+        ],
+        "name": "old"
+      }
+    ],
+    "skip": 111921,
+    "lastActionsUpdateDate": "2024-06-04T12:57:01.439Z",
+    "lastTicketsUpdateDate": "2024-06-04T13:42:32.913Z"
+  }
+]

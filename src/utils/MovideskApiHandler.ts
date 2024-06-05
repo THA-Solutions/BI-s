@@ -46,7 +46,11 @@ export class MovideskApiHandler {
 
     while (continueFetching === true) {
       const url = `${this.url}/past?TOKEN=${this.token}&$select=${this.urlFields}&$skip=${this.skip}`;
-      const response = await axios.get(url);
+      const response = await axios.get(url).catch((error) => {
+        console.error(`Error fetching tickets at skip ${this.skip}: ${error}`);
+        return { data: [] };
+      }
+      );
       if (response.data.length === 0) {
 
         if (this.update == false) {
@@ -160,16 +164,33 @@ export class MovideskApiHandler {
         let agent;
         let firstAction;
 
-        if (!this.indexes.includes(ticket.id)) {
-            if (ticket.actions) {
+      if (!this.indexes.includes(ticket.id)) {
+        if (ticket.actions) {
+              
+              firstAction = ticket.actions[0] || [];
+              
+              if (ticket.statusHistories) {
+                if (ticket.statusHistories[0] && ticket.statusHistories[0].changedBy && ticket.statusHistories[0].changedBy.profileType && (ticket.statusHistories[0].changedBy.profileType === 1 || ticket.statusHistories[0].changedBy.profileType === 3)) {
+                  agent = ticket.statusHistories[0].changedBy.businessName;
+                } else {
+                  agent = ticket.actions.reduce((acc, action) => {
+                    if (action.createdBy && action.createdBy.businessName && (action.createdBy.profileType === 1 || action.createdBy.profileType === 3)) {
+                      return action.createdBy.businessName;
+                    }
+                    return acc;
+                  }, null);
+                }
+              } else {
                 agent = ticket.actions.reduce((acc, action) => {
                     if (action.createdBy && action.createdBy.businessName && (action.createdBy.profileType === 1 || action.createdBy.profileType === 3)) {
                         return action.createdBy.businessName;
                     }
                     return acc;
                 }, null);
+              }
                 
-                firstAction = ticket.actions[0] || [];
+             
+
             } else {
                 agent = ticket.owner && ticket.owner.businessName ? ticket.owner.businessName : null;
             }
@@ -215,7 +236,6 @@ export class MovideskApiHandler {
 
             return newTicket;
         }
-        return null;
     });
 
     let mappedTickets = await Promise.all(mappedTicketsPromises);
