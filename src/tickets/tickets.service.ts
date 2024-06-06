@@ -20,7 +20,6 @@ export class TicketsService {
   private actionsFetchInProgress = false;
 
   constructor() {
-    this.endPointFileHandler = new FileHandler('endpoints.json');
 
     this.oldActionsPerAgent = [];
     this.oldTickets = [];
@@ -30,7 +29,10 @@ export class TicketsService {
   }
 
   async findAllByBrand(brand: string, token: string) {
-  try {
+    this.endPointFileHandler = new FileHandler('endpoints.json');
+
+    try {
+
     brand = brand.toLowerCase();
     this.oldTicketsFileHandler = new FileHandler(`./external_files/json/Tickets-${brand}.json`);
     this.actionsPerAgentFileHandler = new FileHandler(`./external_files/json/Actions-${brand}.json`);
@@ -93,7 +95,9 @@ export class TicketsService {
 }
 
 
- async findActionsPerAgent(brand: string, token: string) {
+  async findActionsPerAgent(brand: string, token: string) {
+    this.endPointFileHandler = new FileHandler('endpoints.json');
+    
   try {
     brand = brand.toLowerCase();
     this.actionsPerAgentFileHandler = new FileHandler(`./external_files/json/Actions-${brand}.json`);
