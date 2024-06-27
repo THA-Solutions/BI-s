@@ -39,48 +39,67 @@ export class MovideskApiHandler {
     this.indexes = tickets.map((ticket) => ticket.id);
   }
 
-  async fetchTickets() {
-    let fetchTickets = [];
 
-    let continueFetching = true;
 
-    while (continueFetching === true) {
-      const url = `${this.url}/past?TOKEN=${this.token}&$select=${this.urlFields}&$skip=${this.skip}`;
-      const response = await axios.get(url).catch((error) => {
-        console.error(`Error fetching tickets at skip ${this.skip}: ${error}`);
-        return { data: [] };
-      }
-      );
-      if (response.data.length === 0) {
+async fetchTickets() {
+  let url = `${this.url}?TOKEN=${this.token}&$select=${this.urlFields}&$filter=createdDate gt 2024-06-20`;
+  const newestTickets = await axios.get(url);
+  const lastTicketId = newestTickets.data.length > 0 ? newestTickets.data[newestTickets.data.length - 1].id : 0;
 
-        if (this.update == false) {
-          this.fetchRemainingTickets();
-        } else {
-          this.skip =
-            fetchTickets.length > 0
-              ? +fetchTickets[fetchTickets.length - 1].id
-              : +this.skip;
+  const maxConcurrentRequests = Math.ceil(lastTicketId / 1000);
+  const batchSize = 10; // Número de requisições por lote
 
-          await this.fetchRemainingTicketsIndividually();
+  let tickets = [];
+console.time('fetchTickets')
+  for (let i = 0; i < maxConcurrentRequests; i += batchSize) {
+    let ticketsPromises = [];
 
-        }
-        return this.tickets;
-      }
-
-      this.skip += 1000;
-
-      this.tickets.push(...response.data);
+    for (let j = 0; j < batchSize && i + j < maxConcurrentRequests; j++) {
+      ticketsPromises.push(fetch(`${this.url}/past?TOKEN=${this.token}&$select=${this.urlFields}&$skip=${(i + j) * 1000}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).then(response => response.json()));
+      ticketsPromises.push(fetch(`${this.url}?TOKEN=${this.token}&$select=${this.urlFields}&$skip=${(i + j) * 1000}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).then(response => response.json()))
     }
 
-    return this.tickets;
+    // Aguarda todas as promessas do lote serem resolvidas
+    const ticketsResponses = await Promise.allSettled(ticketsPromises);
+
+    // Filtra as respostas bem-sucedidas
+    ticketsResponses.forEach(result => {
+      if (result.status === 'fulfilled' && !result.value.message) {
+        tickets.push(result.value);
+      }
+    });
+
+    // Adiciona um atraso entre os lotes para evitar sobrecarregar a API
+    if (i + batchSize < maxConcurrentRequests) {
+      await new Promise(resolve => setTimeout(resolve, 25000)); // 25 segundos de atraso entre os lotes
+    }
   }
+console.timeEnd('fetchTickets')
+  console.log(tickets.flat())
+  console.log(tickets.flat().length)
+  this.tickets = tickets;
+  return this.tickets;
+}
+
+
+
 
   private async fetchRemainingTickets() {
     this.setSkip(0);
-    const url = `${this.url}/?TOKEN=${this.token}&$select=${this.urlFields}&$skip=${this.skip}`;
-
-    while (true) {
     
+    while (true) {
+      const url = `${this.url}/?TOKEN=${this.token}&$select=${this.urlFields}&$skip=${this.skip}`;
+    console.log(url)
       const response = await axios.get(url);
 
       if (response.data.length === 0) {
@@ -115,6 +134,7 @@ export class MovideskApiHandler {
         let fetchPromise = axios
           .get(url || `${this.url}?id=${currentSkip}&TOKEN=${this.token}`)
           .then((response) => {
+            console.log(currentSkip)
             if (response.data && this.indexes.includes(+currentSkip) === false ) {
               if (this.indexes.includes(+currentSkip) === false) {
                 this.tickets.push(response.data);
@@ -161,8 +181,9 @@ export class MovideskApiHandler {
     if (tickets.length === 0 || tickets === null) return;
 
     let mappedTicketsPromises = tickets.map(async (ticket) => {
-        let agent;
-        let firstAction;
+      let agent = ticket.createdBy && ticket.createdBy.businessName ? ticket.createdBy.businessName : null;
+      let team = ticket.ownerTeam
+      let firstAction;
 
       if (!this.indexes.includes(ticket.id)) {
         if (ticket.actions) {
@@ -182,7 +203,10 @@ export class MovideskApiHandler {
                 }
               } else {
                 agent = ticket.actions.reduce((acc, action) => {
-                    if (action.createdBy && action.createdBy.businessName && (action.createdBy.profileType === 1 || action.createdBy.profileType === 3)) {
+                  if (action.createdBy && action.createdBy.businessName && (action.createdBy.profileType === 1 || action.createdBy.profileType === 3)) {
+                    if (action.timeAppointments && action.timeAppointments[0] && action.timeAppointments[0].createdByTeam && action.timeAppointments[0].createdByTeam.name) {
+                        team = action.timeAppointments[0].createdByTeam.name;
+                      }
                         return action.createdBy.businessName;
                     }
                     return acc;
@@ -198,9 +222,7 @@ export class MovideskApiHandler {
             let newTicket = new Ticket(
                 +ticket.id,
                 agent,
-                firstAction && firstAction.timeAppointments && firstAction.timeAppointments[0] && firstAction.timeAppointments[0].createdByTeam
-                ? firstAction.timeAppointments[0].createdByTeam.name
-                : null,
+                team,
                 ticket.createdDate,
                 ticket.closedIn,
                 ticket.resolvedIn,

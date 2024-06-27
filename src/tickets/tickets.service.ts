@@ -6,6 +6,8 @@ import { FileHandler } from 'src/utils/FileHandler';
 @Injectable()
 export class TicketsService {
 
+  private brand: string;
+
   private endPointFileHandler: FileHandler;
   private endPoint: EndPoint;
   private newTickets: any[] = [];
@@ -29,11 +31,12 @@ export class TicketsService {
   }
 
   async findAllByBrand(brand: string, token: string) {
-    this.endPointFileHandler = new FileHandler('endpoints.json');
-
     try {
 
     brand = brand.toLowerCase();
+      
+    this.brand = brand;
+
     this.oldTicketsFileHandler = new FileHandler(`./external_files/json/Tickets-${brand}.json`);
     this.actionsPerAgentFileHandler = new FileHandler(`./external_files/json/Actions-${brand}.json`);
     
@@ -42,52 +45,22 @@ export class TicketsService {
     this.oldActionsPerAgent = this.readOldActionsPerAgent() || [];
 
     this.endPoint = new EndPoint(brand, null, token, null, null, null);
-    this.endPoint.findEndPointByBrandAndToken(brand, token);
+      this.endPoint.findEndPointByBrandAndToken(brand, token);
 
-    if (this.oldTicketsFileHandler.checkFileExists() == false || this.endPoint.getLastCompleteUpdateDate() && ((new Date().getTime() - new Date(this.endPoint.getLastCompleteUpdateDate()).getTime()) / 1000*60) >= 43200) {
-      
-      this.endPoint.setSkip(0);
-      this.oldActionsPerAgent = [];
-      this.oldTickets = [];
-      this.actionsPerAgent = [];
-      this.newTickets = [];
-
-      this.oldTicketsFileHandler.setFileContent([]);
-      this.actionsPerAgentFileHandler.setFileContent([]);
-    }
-
-    const updateTimeDifference = (new Date().getTime() - new Date(this.endPoint.getLastTicketsUpdateDate()).getTime()) / (1000 * 60);
-    if (updateTimeDifference <= 10 || this.ticketFetchInProgress === true) {
-      return this.oldTickets;
-    }
-
-    setTimeout(async () => {
-      try {
-        this.initializeMovideskApiHandler();
+        this.movideskApiHandler = new MovideskApiHandler(
+      this.endPoint.getToken(),
+      this.endPoint.getUrl(),
+      this.endPoint.getUrlFields(),
+      +this.endPoint.getSkip() || 0,
+      this.oldTickets || [],
+      this.endPoint.getTeamMembers(),
+      this.oldTickets && this.oldTickets.length > 0 || this.oldActionsPerAgent && this.oldActionsPerAgent.length > 0? true : false,
+    );
 
         this.ticketFetchInProgress = true;
 
         this.newTickets = await this.movideskApiHandler.fetchAndMapTickets(this.endPoint.getFields())
-
-        this.actionsPerAgent = this.oldActionsPerAgent.concat(this.movideskApiHandler.getActions().flat());
-          
-        this.endPoint.setTeamMembers(this.movideskApiHandler.getTeamMembers());
-
-        this.endPoint.setLastTicketsUpdateDate(new Date() as any);
-        if (this.newTickets.length > 0) {
-          await this.writeTicketsFile();
-          this.updateEndPoints();
-        }
-
-        this.ticketFetchInProgress = false;
-
-        return;
-      } catch (fetchError) {
-        console.error('Error while fetching new tickets:', fetchError);
-      }
-    }, 0);
-
-    return this.oldTickets;
+      return
   } catch (error) {
     console.error(error);
     throw new Error('Error while fetching tickets');
@@ -97,7 +70,7 @@ export class TicketsService {
 
   async findActionsPerAgent(brand: string, token: string) {
     this.endPointFileHandler = new FileHandler('endpoints.json');
-    
+
   try {
     brand = brand.toLowerCase();
     this.actionsPerAgentFileHandler = new FileHandler(`./external_files/json/Actions-${brand}.json`);
@@ -112,7 +85,16 @@ export class TicketsService {
 
     const updateTimeDifference = (new Date().getTime() - new Date(this.endPoint.getLastActionsUpdateDate()).getTime()) / (1000 * 60);
 
-    this.initializeMovideskApiHandler();
+    this.movideskApiHandler = new MovideskApiHandler(
+      this.endPoint.getToken(),
+      this.endPoint.getUrl(),
+      this.endPoint.getUrlFields(),
+      +this.endPoint.getSkip() || 0,
+      this.oldTickets || [],
+      this.endPoint.getTeamMembers(),
+      this.oldTickets && this.oldTickets.length > 0 || this.oldActionsPerAgent && this.oldActionsPerAgent.length > 0? true : false,
+    );
+
     if (this.oldActionsPerAgent.length > 0) {
       this.movideskApiHandler.setUpdate(true);
     } else {
@@ -172,17 +154,6 @@ export class TicketsService {
     return this.actionsPerAgentFileHandler.getFileContent();
   }
 
-  private initializeMovideskApiHandler() {
-    this.movideskApiHandler = new MovideskApiHandler(
-      this.endPoint.getToken(),
-      this.endPoint.getUrl(),
-      this.endPoint.getUrlFields(),
-      +this.endPoint.getSkip() || 0,
-      this.oldTickets || [],
-      this.endPoint.getTeamMembers(),
-      this.oldTickets && this.oldTickets.length > 0 || this.oldActionsPerAgent && this.oldActionsPerAgent.length > 0? true : false,
-    );
-  }
 
   private async writeTicketsFile() {
     if (this.shouldMergeTickets()) {
@@ -238,11 +209,13 @@ export class TicketsService {
   }
 
   private async handleNewTickets() {
-    
 
     if (!this.oldTicketsFileHandler.checkFileExists()) {
       if (this.newTickets && this.newTickets.length > 0) {
         this.oldTicketsFileHandler.setFileContent(this.newTickets);
+        if (this.brand === 'sungrow') {
+          console.log('writing file', this.newTickets)
+        }
         this.oldTicketsFileHandler.writeLocalFile();
         this.endPoint.setSkip(+this.newTickets[this.newTickets.length - 1].id || 0);
       } else {
@@ -264,6 +237,11 @@ export class TicketsService {
   }
 
   private async updateEndPoints() {
+
+    if (!this.endPointFileHandler) { 
+      this.endPointFileHandler = new FileHandler('endpoints.json');
+    }
+
     let endPointList = this.endPointFileHandler.readLocalFile();
 
     delete this.endPoint.endPoints;
