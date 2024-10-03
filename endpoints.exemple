@@ -1,0 +1,18 @@
+[
+  {
+    "teamMembers": [
+    ],
+    "brand": "sungrow",
+    "url": "https://<Marca>.movidesk.com/public/v1/tickets",
+    "token": "<Token>",
+    "urlFields": "<Fields>",
+    "fields": [
+      {
+        "id": [
+          null
+        ],
+        "name": "family"
+      }
+    ]
+  }
+]
