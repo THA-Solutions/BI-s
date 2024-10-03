@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build && cp -r external_files dist/ && cp -r endpoints.json dist/external_files/json/ ",
+    "build": "nest build && cp -r external_files dist/ && cp -r .env dist/",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
