@@ -24,7 +24,7 @@ import { FieldPartnerModule } from './field-partner/field-partner.module';
     DatabaseModule,
     ConfigModule.forRoot({ isGlobal: true }),
   ],
-  controllers: [AppController, PartnerController],
+  controllers: [AppController],
   providers: [AppService,{ provide: APP_INTERCEPTOR, useClass: LoggerInterceptor }],
 })
 export class AppModule {}

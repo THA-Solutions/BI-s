@@ -88,9 +88,10 @@ export class TicketsService {
         }, 0);
 
       }
-
+      console.log('Returning old tickets');
       return this.oldTickets;
     }
+
     this.movideskService.createMovideskApiEntity(
       this.endPoint.url,
       this.endPoint.id,
@@ -131,7 +132,7 @@ export class TicketsService {
 
   private async formatFetchedTickets() {
     try {
-      if (this.ticketsResponse.length === 0){
+      if (!this.ticketsResponse || this.ticketsResponse.length === 0){
         throw new Error('No tickets fetched');
       }
       const formattedTickets = this.ticketsResponse.map((ticket) => {
@@ -154,7 +155,7 @@ export class TicketsService {
         }
       });
     } catch (error) {
-      throw new Error(`Error while formatting fetched tickets: ${error.message}`);
+      throw new Error(`Error while formatting fetched tickets: ${error}`);
     }
   }
 

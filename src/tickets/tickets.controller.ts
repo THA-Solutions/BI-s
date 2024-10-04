@@ -3,7 +3,12 @@ import { TicketsService } from './tickets.service';
 
 @Controller('tickets')
 export class TicketsController {
-  constructor(private readonly ticketsService: TicketsService) {}
+  constructor(private readonly ticketsService: TicketsService) { }
+  
+  @Get()
+  getHelloFromTickets(): string {
+    return 'Hello from Tickets! Welcome to the Tickets Controller';
+  }
 
   @Get('/:brand/:token')
   async findAllTicketsByBrand(

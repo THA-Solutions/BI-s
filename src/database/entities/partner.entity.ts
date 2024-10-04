@@ -1,6 +1,5 @@
-import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
+import { Column, Entity, OneToMany } from "typeorm";
 import { Fields } from "./fields.entity";
-
 
 @Entity()
 export class Partner {
@@ -16,7 +15,7 @@ export class Partner {
     @Column({ nullable: false, length: 1000})
     urlFields: string;
 
-    @OneToMany(() => Fields, field => field.partner)
+    @OneToMany(() => Fields, field => field.partner, {onUpdate: 'CASCADE', onDelete: 'CASCADE'})
     fields: Fields[];
 
     @Column({ nullable: true})
