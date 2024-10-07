@@ -42,7 +42,7 @@ export class MovideskService {
       lastTicketsUpdateDate || new Date().toISOString(),
     );
     this.localFileHandler = new FileHandler(
-      `./external_files/json/Tickets-${this.movidesk.getBrand()}.json`,
+      `../external_files/json/Tickets-${this.movidesk.getBrand()}.json`,
     );
     return;
   }
