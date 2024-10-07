@@ -62,7 +62,7 @@ export class FileHandler {
     const writeStream = fs.createWriteStream(this.path, { flags: 'w' });
     await writeStream.write(this.safeStringify(this.content));
     writeStream.end(() => {
-      console.info('File saved');
+      console.info('File saved', this.path);
     });
     return this.content;
   }
