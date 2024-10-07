@@ -63,6 +63,7 @@ export class FileHandler {
     await writeStream.write(this.safeStringify(this.content));
     writeStream.end(() => {
       console.info('File saved', this.path);
+      console.log(__dirname)
     });
     return this.content;
   }
