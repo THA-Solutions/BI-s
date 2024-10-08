@@ -77,7 +77,6 @@ export class MovideskService {
       if (!this.movidesk){
         throw new Error('A movidesk entity must be instantiated');
       }
-      console.log(this.movidesk.getCompleteUrlOfLastCreatedTicket(),'url')
       const newestTicketId = await axios
         .get(this.movidesk.getCompleteUrlOfLastCreatedTicket())
         .then((res) => {
@@ -100,7 +99,6 @@ async fetchTicketsInMovideskApi(retryCount = 0) {
         : this.movidesk.getCompleteRecentlyUpdatedTicketsApiUrl();
 
     this.requestParams.increaseActualRequestByOne();
-  console.log(apiUrlInUse)
     return await axios
       .get(apiUrlInUse)
       .then(async (res) => {
@@ -251,8 +249,6 @@ async fetchTicketsInMovideskApi(retryCount = 0) {
   async fetchAllTickets() {
 
     const maximumRequest = Math.ceil((await this.fetchLatestCreatedTicket()) / 1000);
-
-    console.log(maximumRequest, 'max request')
 
     this.requestParams = new RequestParams(
       0,

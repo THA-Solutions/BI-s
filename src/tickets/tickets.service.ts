@@ -89,7 +89,6 @@ export class TicketsService {
         }, 0);
 
       }
-      console.log('Returning old tickets');
       return this.oldTickets;
     }
 
@@ -101,8 +100,6 @@ export class TicketsService {
       this.endPoint.brand,
       this.endPoint.lastTicketsUpdateDate,
     );
-
-    console.log(this.movideskService.getMovideskApiEntity())
 
     this.ticketsResponse = await this.movideskService.fetchAllTickets();
 
