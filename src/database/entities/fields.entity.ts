@@ -11,6 +11,6 @@ export class Fields {
     @Column({ nullable: false, primary: true})
     name: string;
     
-    @ManyToOne(() => Partner, partner => partner.id, {nullable: false, onDelete: 'CASCADE', onUpdate: 'CASCADE'})
+    @ManyToOne(() => Partner, partner => partner.id, {nullable: false})
     partner: Partner;
 }
