@@ -42,8 +42,9 @@ export class MovideskService {
       lastTicketsUpdateDate,
     );
     this.localFileHandler = new FileHandler(
-      `${process.env.ROOT_DIR}/external_files/json/Tickets-${this.movidesk.getBrand()}.json`,
+      `${require('path').resolve(__dirname, '../external_files/json')}/Tickets-${this.movidesk.getBrand()}.json`,
     );
+
     return;
   }
   

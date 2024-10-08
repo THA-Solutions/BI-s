@@ -35,11 +35,13 @@ export class TicketsService {
 
   async initializeLocalFiles(brand: string) { 
     this.oldTicketsFileHandler = new FileHandler(
-      `${process.env.ROOT_DIR}/external_files/json/Tickets-${brand}.json`,
+      `${require('path').resolve(__dirname, '../../external_files/json')}/Tickets-${brand}.json`,
     );
     this.actionsPerAgentFileHandler = new FileHandler(
-      `${process.env.ROOT_DIR}/external_files/json/Actions-${brand}.json`,
+      `${require('path').resolve(__dirname, '../../external_files/json')}/Actions-${brand}.json`,
     );
+
+    
   }
 
   async findAndSaveAllTicketsFetchedByBrand(brand: string, token: string) {
@@ -118,8 +120,10 @@ export class TicketsService {
     this.brand = brand.toLowerCase();
 
     this.actionsPerAgentFileHandler = new FileHandler(
-      `${process.env.ROOT_DIR}/external_files/json/Actions-${brand}.json`,
+      `${require('path').resolve(__dirname, '../../external_files/json')}/Actions-${brand}.json`,
     );
+
+
 
     this.endPoint = await this.partnerService.findPartner(token);
     this.oldActionsPerAgent = [];
