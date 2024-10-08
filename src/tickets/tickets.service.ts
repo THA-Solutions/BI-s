@@ -56,7 +56,6 @@ export class TicketsService {
     ) {
       
       this.readOldTickets();
-
       const updateTimeDifferenceInDays =
         (new Date().getTime() -
           new Date(this.endPoint.lastTicketsUpdateDate).getTime()) /
@@ -98,7 +97,10 @@ export class TicketsService {
       this.endPoint.urlFields,
       '0',
       this.endPoint.brand,
+      this.endPoint.lastTicketsUpdateDate,
     );
+
+    console.log(this.movideskService.getMovideskApiEntity())
 
     this.ticketsResponse = await this.movideskService.fetchAllTickets();
 
