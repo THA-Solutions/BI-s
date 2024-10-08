@@ -133,7 +133,7 @@ export class TicketsService {
   private async formatFetchedTickets() {
     try {
       if (!this.ticketsResponse || this.ticketsResponse.length === 0){
-        throw new Error('No tickets fetched');
+        throw new Error(`No tickets fetched - ${this.ticketsResponse.length}`);
       }
       const formattedTickets = this.ticketsResponse.map((ticket) => {
         if (ticket == null) {
