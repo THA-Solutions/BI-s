@@ -7,7 +7,7 @@ export class Partner {
     brand: string;
 
     @Column({nullable: false, primary: true})
-    id: string;
+    id: string; 
 
     @Column({ nullable: false})
     url: string;
