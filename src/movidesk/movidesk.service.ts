@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { Movidesk } from './entities/movidesk.entity';
 import { RequestParams } from './entities/requestParams.entity';
@@ -92,7 +92,10 @@ export class MovideskService {
     }
   }
 
-async fetchTicketsInMovideskApi(retryCount = 0) {
+  async fetchTicketsInMovideskApi(retryCount = 0) {
+  
+    Logger.warn(`Fetching tickets from Movidesk API - Skip ${this.requestParams.getActualRequest() * 1000}`);
+
     const apiUrlInUse =
       this.requestParams.getCurrentApiUrlRoute() === 0
         ? this.movidesk.getCompletePastTicketsApiUrl()
@@ -162,6 +165,8 @@ async fetchTicketsInMovideskApi(retryCount = 0) {
 
   async fetchRecentlyUpdatedTicketsInMovideskApi() {
 
+    Logger.warn(`Fetching tickets from Movidesk API - Skip ${this.requestParams.getActualRequest() * 1000}`);
+    
     const apiUrlInUse = this.movidesk.getCompleteUrlOfLastCreatedOrUpdatedTickets();
 
     return await axios.get(apiUrlInUse).then(async (res) => {

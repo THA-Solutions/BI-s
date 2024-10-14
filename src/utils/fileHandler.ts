@@ -23,17 +23,17 @@ export class FileHandler {
       
       const fileExist = fs.existsSync(this.path);
 
-      Logger.log(`Checking file - ${this.path} | Exist : ${fileExist}`);
+      // Logger.log(`Checking file - ${this.path} | Exist : ${fileExist}`);
       return fileExist
     } catch (error) {
-      Logger.error(`Error while checking file - ${this.path}: ${error.message}`);
+      // Logger.error(`Error while checking file - ${this.path}: ${error.message}`);
     }
   }
 
   public readLocalFile(): any {
     try {
       if (this.fileExists == true) {
-        Logger.log(`Reading file - ${this.path}`);
+        // Logger.log(`Reading file - ${this.path}`);
         this.content = JSON.parse(fs.readFileSync(this.path, 'utf-8'));
   
         this.fileLength = this.content.length - 1;
@@ -55,10 +55,10 @@ export class FileHandler {
       this.content.length === 0 ||
       this.content[0] === undefined
     ) {
-      Logger.error(`No content to write: ${this.path}`);
+      // Logger.error(`No content to write: ${this.path}`);
       return;
     }
-    Logger.log(`Writing file - ${this.path}`);
+    // Logger.log(`Writing file - ${this.path}`);
     const writeStream = fs.createWriteStream(this.path, { flags: 'w' });
     await writeStream.write(this.safeStringify(this.content));
     writeStream.end(() => {
