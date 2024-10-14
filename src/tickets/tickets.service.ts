@@ -5,6 +5,7 @@ import { Ticket } from './entities/ticket.entity';
 import TicketResponse from '../movidesk/entities/ticket.response.entity';
 import { PartnerService } from 'src/partner/partner.service';
 import { Partner } from 'src/database/entities/partner.entity';
+import { time } from 'console';
 @Injectable()
 export class TicketsService {
   private brand: string;
@@ -92,25 +93,9 @@ export class TicketsService {
       return this.oldTickets;
     }
 
-    this.movideskService.createMovideskApiEntity(
-      this.endPoint.url,
-      this.endPoint.id,
-      this.endPoint.urlFields,
-      '0',
-      this.endPoint.brand,
-      this.endPoint.lastTicketsUpdateDate,
-    );
-
-    this.ticketsResponse = await this.movideskService.fetchAllTickets();
-
-    await this.formatFetchedTickets();
-
-    if (this.ticketsResponse == undefined || this.ticketsResponse.length === 0) return [];
-
-    this.saveTicketsInLocalFile();
-    this.saveActionsPerAgentInLocalFile();
-
-    return this.ticketsResponse;
+    this.findTicketsInMovideskWithoutWaiting();
+    
+    return;
   }
 
   async findAllSavedActionsPerAgent(brand: string, token: string) {
@@ -131,6 +116,30 @@ export class TicketsService {
     }
 
     return this.oldActionsPerAgent;
+  }
+
+  private async findTicketsInMovideskWithoutWaiting() {
+     setTimeout(async () => { 
+       this.movideskService.createMovideskApiEntity(
+       this.endPoint.url,
+       this.endPoint.id,
+       this.endPoint.urlFields,
+       '0',
+       this.endPoint.brand,
+       this.endPoint.lastTicketsUpdateDate,
+     );   
+
+       this.ticketsResponse = await this.movideskService.fetchAllTickets();
+
+       await this.formatFetchedTickets();   
+       
+       if (this.ticketsResponse == undefined || this.ticketsResponse.length === 0) return [];  
+       
+       this.saveTicketsInLocalFile();
+       
+       this.saveActionsPerAgentInLocalFile();
+       
+     }, 0);
   }
 
   private async formatFetchedTickets() {
@@ -256,13 +265,17 @@ export class TicketsService {
     this.actionsPerAgent = [...this.actionsPerAgentFileHandler.getFileContent(), ...this.actionsPerAgent];
 
     if (this.actionsPerAgentFileHandler.checkFileExists() == false) {
+
       this.actionsPerAgentFileHandler.setFileContent(this.actionsPerAgent);
       this.actionsPerAgentFileHandler.writeLocalFile();
+
     } else {
+
       this.actionsPerAgentFileHandler.setFileContent(
         this.actionsPerAgent
       );
       this.actionsPerAgentFileHandler.writeLocalFile();
+      
     }
 
     this.requestInProgress = false;

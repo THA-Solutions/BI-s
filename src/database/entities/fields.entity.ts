@@ -10,7 +10,7 @@ export class Fields {
     @Column({ nullable: false, primary: true})
     name: string;
     
-    @ManyToOne(() => Partner, partner => partner.fields, {nullable: false, onDelete: 'CASCADE', onUpdate: 'CASCADE'})
+    @ManyToOne(() => Partner, partner => partner.fields, {nullable: false})
     @JoinColumn({ name: 'partnerId' }) // Explicitamente define a coluna de FK
     partner: Partner;
 }

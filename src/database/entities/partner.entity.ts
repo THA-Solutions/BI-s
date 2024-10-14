@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany } from "typeorm";
+import { Column, Entity, JoinColumn, OneToMany } from "typeorm";
 import { Fields } from "./fields.entity";
 
 @Entity()
@@ -15,7 +15,8 @@ export class Partner {
     @Column({ nullable: false, length: 1000})
     urlFields: string;
 
-    @OneToMany(() => Fields, field => field.partner, {onUpdate: 'CASCADE', onDelete: 'CASCADE'})
+    @OneToMany(() => Fields, field => field.partner)
+    @JoinColumn({ name: 'partnerId' })
     fields: Fields[];
 
     @Column({ nullable: true})
