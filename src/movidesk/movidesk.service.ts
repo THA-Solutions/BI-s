@@ -94,7 +94,7 @@ export class MovideskService {
 
   async fetchTicketsInMovideskApi(retryCount = 0) {
   
-    Logger.warn(`Fetching tickets from Movidesk API - Skip ${this.requestParams.getActualRequest() * 1000}`);
+    Logger.warn(`Fetching tickets from Movidesk API - Skip ${this.requestParams.getActualRequest() * 1000} - ${this.movidesk.getBrand()}`);
 
     const apiUrlInUse =
       this.requestParams.getCurrentApiUrlRoute() === 0
@@ -165,7 +165,7 @@ export class MovideskService {
 
   async fetchRecentlyUpdatedTicketsInMovideskApi() {
 
-    Logger.warn(`Fetching tickets from Movidesk API - Skip ${this.requestParams.getActualRequest() * 1000}`);
+    Logger.warn(`Fetching tickets from Movidesk API - Skip ${this.requestParams.getActualRequest() * 1000} - ${this.movidesk.getBrand()}`);
     
     const apiUrlInUse = this.movidesk.getCompleteUrlOfLastCreatedOrUpdatedTickets();
 
@@ -252,9 +252,7 @@ export class MovideskService {
   }
 
   async fetchAllTickets() {
-
     const maximumRequest = Math.ceil((await this.fetchLatestCreatedTicket()) / 1000);
-
     this.requestParams = new RequestParams(
       0,
       maximumRequest,

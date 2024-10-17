@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { IDataServices } from 'src/core/abstract/data-service.abstract';
 import { Fields } from 'src/core/entities/fields';
 
 @Injectable()
 export class FieldsService {
 
-    constructor(private fieldRepository: IDataServices){}
+    constructor(private repository: IDataServices) { }
 
     private treatFieldsIds(fields: Fields[]): Fields[] {
         fields.forEach(field => {
@@ -19,12 +19,12 @@ export class FieldsService {
                     } else {
                         tempFieldIdString += `-${currentFieldId}`;
                     }
-                    
+
                 });
 
-            }else if (field[field.name]) {
+            } else if (field[field.name]) {
                 tempFieldIdString += `${field.id}`;
-            } 
+            }
 
             field.id = tempFieldIdString;
 
@@ -33,13 +33,13 @@ export class FieldsService {
     }
 
     splitFieldIds(fields: Fields[]) {
-        if(typeof fields === 'string') {
+        if (typeof fields === 'string') {
             return (fields as string).split('-');
         }
 
         const fieldMap = fields.map(field => {
             if (typeof field.id === 'string' && field.id.includes('-')) {
-                field.id= field.id.split('-');
+                field.id = field.id.split('-');
             }
             return field;
         });
@@ -48,18 +48,30 @@ export class FieldsService {
     }
 
     async createFields(fields: Fields[]) {
-        fields = this.treatFieldsIds(fields);
+        try {
+            fields = this.treatFieldsIds(fields);
 
-        return this.fieldRepository.fields.create(fields as any);
+            return this.repository.fields.create(fields as any);
+        } catch (error) {
+            Logger.error(`Error while creating fields: ${error.message}`);
+        }
     }
 
-    async updateField(id:string,fields: Fields[]) {
-        fields = this.treatFieldsIds(fields);
-        return this.fieldRepository.fields.update(id,fields as any);
+    async updateField(id: string, fields: Fields[]) {
+        try {
+            fields = this.treatFieldsIds(fields);
+            return this.repository.fields.update(id, fields as any);
+        } catch (error) {
+            Logger.error(`Error while updating fields: ${error.message}`);
+        }
     }
-    
+
     async deleteField(id: string) {
-        return this.fieldRepository.fields.delete(id);
+        try {
+            return this.repository.fields.delete(id);
+        } catch (error) {
+            Logger.error(`Error while deleting fields: ${error.message}`);
+        }
     }
 
 }

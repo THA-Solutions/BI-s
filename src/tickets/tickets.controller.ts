@@ -16,10 +16,13 @@ export class TicketsController {
     @Param('token') token: string,
   ) {
 
+    this.ticketsService.finalizeAllHandlers();
+    
     const tickets = await this.ticketsService.findAndSaveAllTicketsFetchedByBrand(
       brand,
       token,
     );
+    
 
     return tickets
   }
@@ -29,6 +32,11 @@ export class TicketsController {
     @Param('brand') brand: string,
     @Param('token') token: string,
   ) {
-    return await this.ticketsService.findAllSavedActionsPerAgent(brand, token);
+
+    const actions = await this.ticketsService.findAllSavedActionsPerAgent(brand, token);
+
+    this.ticketsService.finalizeAllHandlers();
+    
+    return actions
   }
 }

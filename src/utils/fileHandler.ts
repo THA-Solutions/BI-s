@@ -58,12 +58,11 @@ export class FileHandler {
       // Logger.error(`No content to write: ${this.path}`);
       return;
     }
-    // Logger.log(`Writing file - ${this.path}`);
     const writeStream = fs.createWriteStream(this.path, { flags: 'w' });
     await writeStream.write(this.safeStringify(this.content));
     writeStream.end(() => {
-      console.info('File saved', this.path);
     });
+    Logger.log(`File written`);
     return this.content;
   }
 
