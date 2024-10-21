@@ -61,6 +61,7 @@ export class TicketsService {
 
       await this.findTicketsInMovideskWithoutWaiting(this.endPoint);
     } catch (error) {
+      this.requestInProgress = false;
       throw new Error(`Error while fetching and saving all tickets fetched by brand: ${error.message}`);
     }
   }
@@ -78,6 +79,7 @@ export class TicketsService {
 
       return this.oldActionsPerAgent;
     } catch (error) {
+      this.requestInProgress = false;
       throw new Error(`Error while fetching actions per agent: ${error.message}`);
     }
   }
@@ -110,6 +112,7 @@ export class TicketsService {
         }, 0);
       }
     } catch (error) {
+      this.requestInProgress = false;
       throw new Error(`Error while fetching tickets in Movidesk without waiting: ${error.message}`);
     }
   }
@@ -132,6 +135,7 @@ export class TicketsService {
         }
       });
     } catch (error) {
+      this.requestInProgress = false;
       throw new Error(`Error while formatting fetched tickets: ${error.message}`);
     }
   }
@@ -168,6 +172,7 @@ export class TicketsService {
         this.endPoint.brand || this.brand
       );
     } catch (error) {
+      this.requestInProgress = false;
       throw new Error(`Error while creating ticket entity: ${error.message}`);
     }
   }
@@ -185,6 +190,7 @@ export class TicketsService {
       ticket.deleteFields();
       return ticket;
     } catch (error) {
+      this.requestInProgress = false;
       throw new Error(`Error while treating ticket data: ${error.message}`);
     }
   }
@@ -205,6 +211,7 @@ export class TicketsService {
       this.requestInProgress = false;
       return this.newTickets;
     } catch (error) {
+      this.requestInProgress = false;
       throw new Error(`Error while saving tickets in local file: ${error.message}`);
     }
   }
@@ -237,6 +244,7 @@ export class TicketsService {
       this.requestInProgress = false;
       this.actionsPerAgent = [];
     } catch (error) {
+      this.requestInProgress = false;
       throw new Error(`Error while saving actions per agent in local file: ${error.message}`);
     }
   }
