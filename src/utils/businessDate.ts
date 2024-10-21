@@ -1,3 +1,5 @@
+import e from "express";
+
 export class BusinessDate {
   private previousDay: Date;
 
@@ -11,38 +13,29 @@ export class BusinessDate {
 
   calculatePreviousBusinessDayStartAndEndHour() {
     const now = new Date();
-    let day = now.getDay();
-    let date = now.getDate();
-    const hours = now.getHours();
+    const nowString = now.toDateString();
+    let [dayOfWeek, month, day, year] = nowString.split(" ") as [string, string, number, number]; 
 
-    function isBusinessDay(day) {
-      return day >= 1 && day <= 5;
+    const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    let dayIndex = daysOfWeek.indexOf(dayOfWeek);
+    
+    if (dayOfWeek === "Mon") {
+      day = day - 3;
+    } else if (dayOfWeek === "Sun") {
+      day = day - 2;
+    } else if (dayOfWeek === "Sat") {
+      day = day - 1;
     }
 
-    if (day === 0) {
-      date -= 2;
-    } else if (day === 6) {
-      date -= 1;
-    } else if (hours < 8) {
-      date -= 1;
-    } else if (hours >= 18) {
-      date -= 1;
-    }
+    const startHour = `${daysOfWeek[dayIndex]} ${month} ${day} ${year} 08:00:00`;
+    const endHour = `${daysOfWeek[dayIndex]} ${month} ${day} ${year} 18:00:00`;
 
-    const previousDate = new Date(now.setDate(date));
-    day = previousDate.getDay();
-    while (!isBusinessDay(day)) {
-      previousDate.setDate(previousDate.getDate() - 1);
-      day = previousDate.getDay();
-    }
+    this.previousDay = new Date(`${daysOfWeek[dayIndex]} ${month} ${day} ${year}`);
+    this.startHour = new Date(startHour);
+    this.endHour = new Date(endHour);
 
-    this.previousDay = previousDate;
-
-    this.startHour = new Date(previousDate.setHours(8, 0, 0, 0));
-    this.endHour = new Date(previousDate.setHours(18, 0, 0, 0));
-
-    return;
-  }
+    return { startHour, endHour };
+}
 
   getPreviousDay() {
     return this.previousDay;

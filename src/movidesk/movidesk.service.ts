@@ -80,6 +80,7 @@ export class MovideskService {
       const newestTicketId = await axios
         .get(this.movidesk.getCompleteUrlOfLastCreatedTicket())
         .then((res) => {
+
           if (res.data.length > 0) {
             return res.data[res.data.length - 1].id;
           } else {
@@ -92,7 +93,7 @@ export class MovideskService {
     }
   }
 
-  async fetchTicketsInMovideskApi(retryCount = 0) {
+  private async fetchTicketsInMovideskApi(retryCount = 0) {
   
     Logger.warn(`Fetching tickets from Movidesk API - Skip ${this.requestParams.getActualRequest() * 1000} - ${this.movidesk.getBrand()}`);
 
@@ -142,10 +143,10 @@ export class MovideskService {
         return res.data;
       })
       .catch(async (error) => {
-        console.error('Error while fetching tickets', error);
+        Logger.error('Error while fetching tickets', error);
         if (error.response && error.response.status === 500) {
           if (retryCount < 3) {
-            console.error(
+            Logger.error(
               `Error 500 while fetching tickets, trying again in 5 seconds (Attempt ${retryCount + 1})`,
             );
             await this.delay(5000); // Espera 5 segundos antes de tentar novamente
@@ -163,7 +164,7 @@ export class MovideskService {
       });
   }
 
-  async fetchRecentlyUpdatedTicketsInMovideskApi() {
+  private async fetchRecentlyUpdatedTicketsInMovideskApi() {
 
     Logger.warn(`Fetching tickets from Movidesk API - Skip ${this.requestParams.getActualRequest() * 1000} - ${this.movidesk.getBrand()}`);
     
@@ -197,9 +198,9 @@ export class MovideskService {
 
       return res.data;
     }).catch(async (error) => {
-      console.error('Error while fetching tickets', error);
+      Logger.error('Error while fetching tickets', error);
       if (error.response.status === 500) {
-        console.error(
+        Logger.error(
           'Error 500 while fetching tickets, trying again in 5 seconds',
         );
         setTimeout(() => { }, 5000);
@@ -302,7 +303,6 @@ export class MovideskService {
       maximumRequest,
       1,
     );
-
     while (
       true &&
       this.requestParams.getActualRequest() <

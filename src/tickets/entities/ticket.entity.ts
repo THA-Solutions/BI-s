@@ -53,7 +53,9 @@ export class Ticket {
 
   private statusHistories: any[];
 
-  private currentTeam: string
+  private currentTeam: string;
+
+  private brand?: string;
 
   constructor(
     id?: number,
@@ -81,7 +83,8 @@ export class Ticket {
     customFieldValues?: any,
     fields?: Fields[],
     statusHistories?: any[],
-    currentTeam?: string
+    currentTeam?: string,
+    brand?: string,
   ) {
     this.id = id;
     this.agent = agent;
@@ -109,6 +112,7 @@ export class Ticket {
     this.fields = fields;
     this.statusHistories = statusHistories;
     this.currentTeam = currentTeam;
+    this.brand = brand;
   }
 
   async mapFields() {
@@ -459,5 +463,9 @@ export class Ticket {
 
   public deleteFields() {
     delete this.fields;
+  }
+
+  public getBrand(): string {
+    return this.brand;
   }
 }
