@@ -16,6 +16,13 @@ export class TicketsController {
     @Param('token') token: string,
   ) {
 
+    
+    if (this.ticketsService.getRequestsInProgress() === true) {
+      return { message: 'Request in progress' }
+    } else {
+      this.ticketsService.setRequestsInProgress(true);
+    };
+
     this.ticketsService.finalizeAllHandlers();
     
     const tickets = await this.ticketsService.findAndSaveAllTicketsFetchedByBrand(
@@ -40,3 +47,11 @@ export class TicketsController {
     return actions
   }
 }
+
+
+    // this.oldTicketsFileHandler = new FileHandler(
+    //   `${require('path').resolve(__dirname, '../../external_files/json')}/Tickets-${brand}.json`,
+    // );
+    // this.actionsPerAgentFileHandler = new FileHandler(
+    //   `${require('path').resolve(__dirname, '../../external_files/json')}/Actions-${brand}.json`,
+    // );

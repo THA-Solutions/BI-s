@@ -31,7 +31,6 @@ export class Movidesk {
     this.lastTicketUpdateDate = lastTicketUpdateDate;
 
     this.businessDate = new BusinessDate();
-    this.businessDate.calculatePreviousBusinessDayStartAndEndHour();
   }
 
   public setBaseUrl(url: string) {

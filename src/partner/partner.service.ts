@@ -62,10 +62,21 @@ export class PartnerService {
     }
 
     async updatePartner(token: string, partner: Partner) {
-
         try {
+            const partnerFound = await this.repository.partner.findById(token);
+            if (!partnerFound) {
+                throw new Error('Partner not found');
+            }
+
             if (partner.fields) {
-                await this.fieldsService.createFields(partner.fields) as any;
+                const existingFields = await this.fieldPartnerService.findFieldPartner(token);
+                const newFields = partner.fields.filter(field => 
+                    !existingFields.some(existingField => existingField.id === field.id)
+                );
+
+                if (newFields.length > 0) {
+                    await this.fieldsService.createFields(newFields);
+                }
             }
 
             partner.fields = undefined;
@@ -85,5 +96,9 @@ export class PartnerService {
         }
     }
 
-
+    calculateTimeDifferenceOfLastUpdateAndNow(lastUpdateDate: string) {
+        return(new Date().getTime() -
+            new Date(lastUpdateDate).getTime()) /
+          (1000 * 60 * 60 * 24);
+     }
 }

@@ -20,7 +20,7 @@ export class FileHandler {
 
   public checkFileExists(): boolean {
     try {
-      
+
       const fileExist = fs.existsSync(this.path);
 
       // Logger.log(`Checking file - ${this.path} | Exist : ${fileExist}`);
@@ -35,35 +35,38 @@ export class FileHandler {
       if (this.fileExists == true) {
         // Logger.log(`Reading file - ${this.path}`);
         this.content = JSON.parse(fs.readFileSync(this.path, 'utf-8'));
-  
+
         this.fileLength = this.content.length - 1;
-  
+
         return this.content;
-      } else {
-        console.error(`File does not exist: ${this.path}`);
-        return null;
       }
+
+      throw new Error(`File does not exist - ${this.path}`);
     } catch (error) {
-      
-      throw new Error(`Error while reading file - ${this.path}: ${error.message}`);
+      Logger.error(`Error while reading file - ${this.path}: ${error.message}`);
     }
   }
 
   public async writeLocalFile() {
-    if (
-      !this.content ||
-      this.content.length === 0 ||
-      this.content[0] === undefined
-    ) {
-      // Logger.error(`No content to write: ${this.path}`);
-      return;
+    try {
+      if (
+        !this.content ||
+        this.content.length === 0 ||
+        this.content[0] === undefined
+      ) {
+        return;
+      }
+
+      const writeStream = fs.createWriteStream(this.path, { flags: 'w' });
+      await writeStream.write(this.safeStringify(this.content));
+      writeStream.end(() => {
+      });
+
+      Logger.log(`File written`, this.path);
+      return this.content;
+    } catch (error) {
+      Logger.error(`Error while writing file - ${this.path}: ${error.message}`);
     }
-    const writeStream = fs.createWriteStream(this.path, { flags: 'w' });
-    await writeStream.write(this.safeStringify(this.content));
-    writeStream.end(() => {
-    });
-    Logger.log(`File written`);
-    return this.content;
   }
 
   public appendFile(): void {
@@ -72,14 +75,14 @@ export class FileHandler {
       this.content.length === 0 ||
       this.content[0] === undefined
     ) {
-      console.error(`No content to append: ${this.path}`);
+      Logger.error(`No content to append: ${this.path}`);
       return;
     }
 
     const appendStream = fs.createWriteStream(this.path, { flags: 'a' });
     appendStream.write(this.safeStringify(this.content));
     appendStream.end(() => {
-      console.info('File appended');
+      Logger.log('File appended');
     });
   }
 
@@ -97,6 +100,10 @@ export class FileHandler {
 
   public appendContent(content: any): void {
     this.content.push(content);
+  }
+
+  public getFileExists(): boolean {
+    return this.fileExists;
   }
 
   public setFileLength(fileLength: number): void {
