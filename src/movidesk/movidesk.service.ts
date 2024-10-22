@@ -80,7 +80,6 @@ export class MovideskService {
       const newestTicketId = await axios
         .get(this.movidesk.getCompleteUrlOfLastCreatedTicket())
         .then((res) => {
-
           if (res.data.length > 0) {
             return res.data[res.data.length - 1].id;
           } else {

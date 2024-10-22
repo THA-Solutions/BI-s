@@ -15,7 +15,6 @@ export class BusinessDate {
     const now = new Date();
     const nowString = now.toDateString();
     let [dayOfWeek, month, day, year] = nowString.split(" ") as [string, string, number, number]; 
-
     const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     let dayIndex = daysOfWeek.indexOf(dayOfWeek);
     
@@ -23,7 +22,7 @@ export class BusinessDate {
       day = day - 3;
     } else if (dayOfWeek === "Sun") {
       day = day - 2;
-    } else if (dayOfWeek === "Sat") {
+    } else{
       day = day - 1;
     }
 

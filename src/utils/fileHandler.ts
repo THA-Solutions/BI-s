@@ -62,7 +62,7 @@ export class FileHandler {
       writeStream.end(() => {
       });
 
-      Logger.log(`File written`, this.path);
+      Logger.log(`File written`);
       return this.content;
     } catch (error) {
       Logger.error(`Error while writing file - ${this.path}: ${error.message}`);
