@@ -35,8 +35,8 @@ export class TicketsService {
   }
 
   async initializeLocalFiles(brand: string) {
-    const basePath = './external_files/json';
-    // const basePath = `${require('path').resolve(__dirname, '../../external_files/json')}`;
+    // const basePath = './external_files/json';
+    const basePath = `${require('path').resolve(__dirname, '../../external_files/json')}`;
     this.oldTicketsFileHandler = new FileHandler(`${basePath}/Tickets-${brand}.json`);
     this.actionsPerAgentFileHandler = new FileHandler(`${basePath}/Actions-${brand}.json`);
   }
