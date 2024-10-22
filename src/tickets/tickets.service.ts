@@ -102,6 +102,7 @@ export class TicketsService {
             : await this.movideskService.fetchRecentlyUpdatedTickets();
 
           if (!this.ticketsResponse || this.ticketsResponse.length === 0) {
+            this.requestInProgress = false;
             throw new Error('No tickets fetched from Movidesk');
           }
 
