@@ -43,6 +43,9 @@ export class TicketsService {
 
   async findAndSaveAllTicketsFetchedByBrand(brand: string, token: string) {
     try {
+
+      this.resetState();
+
       this.brand = brand.toLowerCase();
       await this.initializeLocalFiles(brand);
       this.endPoint = await this.partnerService.findPartner(token);
@@ -196,26 +199,27 @@ export class TicketsService {
     }
   }
 
-  private async saveTicketsInLocalFile() {
-    try {
-      if (!this.oldTicketsFileHandler.checkFileExists()) {
-        this.oldTicketsFileHandler.setFileContent(this.newTickets);
-        await this.oldTicketsFileHandler.writeLocalFile();
-        this.newTickets = [];
-      } else {
-        this.mergeNewTicketsWithOld();
-        this.oldTicketsFileHandler.setFileContent(this.oldTickets);
-        await this.oldTicketsFileHandler.writeLocalFile();
-      }
-
-      await this.updateEndPoints();
-      this.requestInProgress = false;
-      return this.newTickets;
-    } catch (error) {
-      this.requestInProgress = false;
-      throw new Error(`Error while saving tickets in local file: ${error.message}`);
+private async saveTicketsInLocalFile() {
+  try {
+    if (!this.oldTicketsFileHandler.checkFileExists()) {
+      this.oldTicketsFileHandler.setFileContent(this.newTickets);
+      await this.oldTicketsFileHandler.writeLocalFile();
+      this.newTickets = [];
+    } else {
+      this.mergeNewTicketsWithOld();
+      this.oldTicketsFileHandler.setFileContent(this.oldTickets);
+      await this.oldTicketsFileHandler.writeLocalFile();
     }
+
+    await this.updateEndPoints();
+    this.requestInProgress = false;
+    return this.newTickets;
+  } catch (error) {
+    this.requestInProgress = false;
+    throw new Error(`Error while saving tickets in local file: ${error.message}`);
   }
+}
+
 
   private mergeNewTicketsWithOld() {
     for (const ticket of this.newTickets) {

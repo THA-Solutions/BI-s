@@ -16,7 +16,6 @@ export class TicketsController {
     @Param('token') token: string,
   ) {
 
-    
     if (this.ticketsService.getRequestsInProgress() === true) {
       return { message: 'Request in progress' }
     } else {
