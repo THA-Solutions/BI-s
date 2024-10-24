@@ -137,7 +137,7 @@ export class TicketsService {
 
       let lastTicketId = 0;
       formattedTickets.forEach(ticket => {
-        console.log(ticket,'ticket');
+        console.log(ticket, 'ticket');
         if (ticket != null && ticket.id > lastTicketId && ticket.getBrand().toLowerCase() === this.brand) {
           this.newTickets.push(ticket);
           lastTicketId = ticket.id;
@@ -153,7 +153,6 @@ export class TicketsService {
 
   private createTicketEntity(ticket: any, fields?: any) {
     try {
-      console.log(ticket.brand);
       return new Ticket(
         ticket.id,
         null,
@@ -181,7 +180,7 @@ export class TicketsService {
         fields || this.endPoint.fields,
         ticket.statusHistories,
         ticket.ownerTeam || null,
-        ticket.brand
+        ticket.brand || this.brand
       );
     } catch (error) {
       this.requestInProgress = false;
