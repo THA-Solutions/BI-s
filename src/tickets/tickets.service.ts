@@ -132,10 +132,12 @@ export class TicketsService {
           ticketEntity = this.treatTicketData(ticketEntity);
           return ticketEntity;
         }
+        console.log('Ticket is null');
       });
 
       let lastTicketId = 0;
       formattedTickets.forEach(ticket => {
+        console.log(ticket);
         if (ticket != null && ticket.id > lastTicketId && ticket.getBrand().toLowerCase() === this.brand) {
           this.newTickets.push(ticket);
           lastTicketId = ticket.id;
