@@ -19,6 +19,9 @@ export class MovideskService {
   constructor() {
     this.tickets = [];
     this.lastTicketId = 0;
+    this.requestParams = null;
+    this.movidesk = null;
+    this.localFileHandler = null;
   }
 
   private delay(ms: number) {
@@ -41,8 +44,11 @@ export class MovideskService {
       brand,
       lastTicketsUpdateDate,
     );
+
+    // const basePath = './external_files/json'
+    const basePath = `${require('path').resolve(__dirname, '../../external_files/json')}`;
     this.localFileHandler = new FileHandler(
-      `${require('path').resolve(__dirname, '../external_files/json')}/Tickets-${this.movidesk.getBrand()}.json`,
+      `${basePath}/Tickets-${this.movidesk.getBrand()}.json`,
     );
 
     return;
@@ -131,6 +137,8 @@ export class MovideskService {
           if (ticket.id > this.lastTicketId && ticket.id !== this.lastTicketId) {
             this.lastTicketId = ticket.id;
 
+            ticket.brand = this.movidesk.getBrand()
+
             this.pushTicket(ticket);
 
             return ticket;
@@ -177,7 +185,11 @@ export class MovideskService {
       res.data = res.data.map((ticket) => {
         if (ticket.id > this.lastTicketId) {
           this.lastTicketId = ticket.id;
+
+          ticket.brand = this.movidesk.getBrand()
+
           this.pushTicket(ticket);
+
           return ticket;
         } else if (ticket.id < this.lastTicketId) {
           this.tickets = this.tickets.filter((oldTicket) => {
@@ -253,6 +265,7 @@ export class MovideskService {
 
   async fetchAllTickets() {
     const maximumRequest = Math.ceil((await this.fetchLatestCreatedTicket()) / 1000);
+
     this.requestParams = new RequestParams(
       0,
       maximumRequest,
