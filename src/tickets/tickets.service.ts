@@ -44,7 +44,7 @@ export class TicketsService {
   async findAndSaveAllTicketsFetchedByBrand(brand: string, token: string) {
     try {
 
-      this.resetState();
+      this.finalizeAllHandlers();
 
       this.brand = brand.toLowerCase();
       await this.initializeLocalFiles(brand);
@@ -57,8 +57,11 @@ export class TicketsService {
         if (updateTimeDifferenceInDays >= 1) {
           this.movideskService.setLastTicketId(this.oldTickets[this.oldTickets.length - 1].id);
           await this.findTicketsInMovideskWithoutWaiting(this.endPoint);
+          this.requestInProgress = false;
+
         }
 
+        this.requestInProgress = false;
         return this.oldTickets;
       }
 
@@ -137,6 +140,8 @@ export class TicketsService {
           this.newTickets.push(ticket);
           lastTicketId = ticket.id;
         }
+        else {
+        }
       });
     } catch (error) {
       this.requestInProgress = false;
@@ -173,7 +178,7 @@ export class TicketsService {
         fields || this.endPoint.fields,
         ticket.statusHistories,
         ticket.ownerTeam || null,
-        this.endPoint.brand || this.brand
+        ticket.brand
       );
     } catch (error) {
       this.requestInProgress = false;
@@ -199,26 +204,28 @@ export class TicketsService {
     }
   }
 
-private async saveTicketsInLocalFile() {
-  try {
-    if (!this.oldTicketsFileHandler.checkFileExists()) {
-      this.oldTicketsFileHandler.setFileContent(this.newTickets);
-      await this.oldTicketsFileHandler.writeLocalFile();
-      this.newTickets = [];
-    } else {
-      this.mergeNewTicketsWithOld();
-      this.oldTicketsFileHandler.setFileContent(this.oldTickets);
-      await this.oldTicketsFileHandler.writeLocalFile();
-    }
+  private async saveTicketsInLocalFile() {
+    try {
+      if (this.oldTicketsFileHandler.checkFileExists() === true) {
+        this.oldTicketsFileHandler.setFileContent(this.newTickets);
+        await this.oldTicketsFileHandler.writeLocalFile();
+        this.requestInProgress = false;
+        this.newTickets = [];
+      } else {
+        this.mergeNewTicketsWithOld();
+        this.oldTicketsFileHandler.setFileContent(this.oldTickets);
+        await this.oldTicketsFileHandler.writeLocalFile();
+        this.requestInProgress = false;
+      }
 
-    await this.updateEndPoints();
-    this.requestInProgress = false;
-    return this.newTickets;
-  } catch (error) {
-    this.requestInProgress = false;
-    throw new Error(`Error while saving tickets in local file: ${error.message}`);
+      await this.updateEndPoints();
+
+      return this.newTickets;
+    } catch (error) {
+      this.requestInProgress = false;
+      throw new Error(`Error while saving tickets in local file: ${error.message}`);
+    }
   }
-}
 
 
   private mergeNewTicketsWithOld() {
@@ -241,12 +248,13 @@ private async saveTicketsInLocalFile() {
       if (!this.actionsPerAgentFileHandler.checkFileExists()) {
         this.actionsPerAgentFileHandler.setFileContent(this.actionsPerAgent);
         await this.actionsPerAgentFileHandler.writeLocalFile();
+        this.requestInProgress = false;
       } else {
         this.actionsPerAgentFileHandler.setFileContent(this.actionsPerAgent);
         await this.actionsPerAgentFileHandler.writeLocalFile();
+        this.requestInProgress = false;
       }
 
-      this.requestInProgress = false;
       this.actionsPerAgent = [];
     } catch (error) {
       this.requestInProgress = false;

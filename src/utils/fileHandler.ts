@@ -54,6 +54,8 @@ export class FileHandler {
         this.content.length === 0 ||
         this.content[0] === undefined
       ) {
+        Logger.error(`No content to write`)
+        
         return;
       }
 

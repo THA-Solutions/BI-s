@@ -46,11 +46,3 @@ export class TicketsController {
     return actions
   }
 }
-
-
-    // this.oldTicketsFileHandler = new FileHandler(
-    //   `${require('path').resolve(__dirname, '../../external_files/json')}/Tickets-${brand}.json`,
-    // );
-    // this.actionsPerAgentFileHandler = new FileHandler(
-    //   `${require('path').resolve(__dirname, '../../external_files/json')}/Actions-${brand}.json`,
-    // );
