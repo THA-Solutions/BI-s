@@ -180,7 +180,7 @@ export class TicketsService {
         fields || this.endPoint.fields,
         ticket.statusHistories,
         ticket.ownerTeam || null,
-        ticket.brand || this.brand
+        ticket.brand ? ticket.brand : this.brand
       );
     } catch (error) {
       this.requestInProgress = false;
